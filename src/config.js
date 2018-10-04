@@ -93,6 +93,9 @@ ChartInternal.prototype.getDefaultConfig = function () {
         legend_padding: 0,
         legend_item_tile_width: 10,
         legend_item_tile_height: 10,
+        legend_title: "",
+        legend_showBackgroundRect: false,
+        legend_horizontally: undefined,
         // axis
         axis_rotated: false,
         axis_x_show: true,

@@ -9,6 +9,12 @@
     <div id="chart4"></div>
     <div id="chart5"></div>
     <div id="chart6"></div>
+    <div id="chart7"></div>
+    <div id="chart8"></div>
+    <div id="chart9"></div>
+    <div id="chart10"></div>
+    <div id="chart11"></div>
+    <div id="chart12"></div>
 
     <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
     <script src="../js/c3.js"></script>
@@ -34,10 +40,39 @@
         legend: {
           position: 'right'
         },
+        axis: {
+          rotated: true
+        }
       });
 
       c3.generate({
         bindto: '#chart3',
+        data: {
+          columns: columns,
+        },
+        title:{
+          text: "Title of the chart to check padding"
+        },
+        legend: {
+          position: 'top'
+        },
+      });
+
+      c3.generate({
+        bindto: '#chart4',
+        data: {
+          columns: columns,
+        },
+        legend: {
+          position: 'left'
+        },
+        axis: {
+          rotated: true
+        }
+      });
+
+      c3.generate({
+        bindto: '#chart5',
         data: {
           columns: columns,
         },
@@ -47,39 +82,105 @@
       });
 
       c3.generate({
-        bindto: '#chart4',
-        data: {
-          columns: columns,
-        },
-        axis: {
-          rotated: true,
-        },
-      });
-
-      c3.generate({
-        bindto: '#chart5',
-        data: {
-          columns: columns,
-        },
-        legend: {
-          position: 'right'
-        },
-        axis: {
-          rotated: true,
-        },
-      });
-
-      c3.generate({
         bindto: '#chart6',
         data: {
           columns: columns,
         },
         legend: {
-          position: 'inset'
+          position: 'inset',
+          inset: {
+            step: 5,
+            anchor: 'top-right'
+          }
+        },
+      });
+
+      c3.generate({
+        bindto: '#chart7',
+        data: {
+          columns: columns,
+        },
+        legend: {
+          position: 'inset',
+          inset: {
+            step: 3,
+            anchor: 'bottom-left'
+          }
+        },
+      });
+
+      c3.generate({
+        bindto: '#chart8',
+        data: {
+          columns: columns,
+        },
+        legend: {
+          position: 'inset',
+          inset: {
+            step: 3,
+            anchor: 'bottom-right'
+          }
+        },
+      });
+
+      c3.generate({
+        bindto: '#chart9',
+        data: {
+          columns: columns,
+        },
+        legend: {
+          showBackgroundRect: true,
+          title: "The best legend title",
+          horizontally: false
         },
         axis: {
           rotated: true,
         },
+      });
+
+      c3.generate({
+        bindto: '#chart10',
+        data: {
+          columns: columns,
+        },
+        legend: {
+          position: 'right',
+          showBackgroundRect: true,
+          title: "The best legend title",
+          horizontally: true
+        },
+        axis: {
+          rotated: true,
+        },
+      });
+
+      c3.generate({
+        bindto: '#chart11',
+        data: {
+          columns: columns,
+        },
+        legend: {
+          position: 'left',
+          inset: {
+            step: 4
+          },
+          showBackgroundRect: true,
+          title: "The best legend title",
+          horizontally: true
+        }
+      });
+
+      c3.generate({
+        bindto: '#chart12',
+        data: {
+          columns: columns,
+        },
+        legend: {
+          position: 'top',
+          showBackgroundRect: true,
+          title: "The best legend title",
+          horizontally: false
+        }
       });
 
     </script>

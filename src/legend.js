@@ -6,6 +6,7 @@ ChartInternal.prototype.initLegend = function () {
     var $$ = this;
     $$.legendItemTextBox = {};
     $$.legendHasRendered = false;
+    $$.legendTitleHeight = 0;
     $$.legend = $$.svg.append("g").attr("transform", $$.getTranslate('legend'));
     if (!$$.config.legend_show) {
         $$.legend.style('visibility', 'hidden');
@@ -21,45 +22,61 @@ ChartInternal.prototype.updateLegendWithDefaults = function () {
     $$.updateLegend($$.mapToIds($$.data.targets), {withTransform: false, withTransitionForTransform: false, withTransition: false});
 };
 ChartInternal.prototype.updateSizeForLegend = function (legendHeight, legendWidth) {
-    var $$ = this, config = $$.config, insetLegendPosition = {
-        top: $$.isLegendTop ? $$.getCurrentPaddingTop() + config.legend_inset_y + 5.5 : $$.currentHeight - legendHeight - $$.getCurrentPaddingBottom() - config.legend_inset_y,
-        left: $$.isLegendLeft ? $$.getCurrentPaddingLeft() + config.legend_inset_x + 0.5 : $$.currentWidth - legendWidth - $$.getCurrentPaddingRight() - config.legend_inset_x + 0.5
-    };
+    var $$ = this, 
+    config = $$.config, 
+    insetLegendPosition = {
+        top: $$.isLegendInsetTop ? $$.getCurrentPaddingTop() + config.legend_inset_y : $$.currentHeight - legendHeight - $$.getCurrentPaddingBottom() - config.legend_inset_y,
+        left: $$.isLegendInsetLeft ? $$.getCurrentPaddingLeft() + config.legend_inset_x : $$.currentWidth - legendWidth - $$.getCurrentPaddingRight() - config.legend_inset_x
+    }, x, y;
+
+    if ($$.isLegendLeft) {
+        x = 0;
+    } else if ($$.isLegendRight) {
+        x = $$.currentWidth - legendWidth;
+    } else if ($$.isLegendInset) {
+        x = insetLegendPosition.left;
+    } else {
+        x = ($$.currentWidth - legendWidth) / 2;
+    }
+
+    if ($$.isLegendLeft || $$.isLegendRight) {
+        y = ($$.currentHeight - legendHeight) / 2;
+    } else if ($$.isLegendTop) {
+        y = $$.getCurrentPaddingTop();
+    } else if ($$.isLegendInset) {
+        y = insetLegendPosition.top;
+    } else {
+        y = $$.currentHeight - legendHeight - $$.getCurrentPaddingBottom();
+    }    
 
     $$.margin3 = {
-        top: $$.isLegendRight ? 0 : $$.isLegendInset ? insetLegendPosition.top : $$.currentHeight - legendHeight,
+        top: y < 0 ? 0 : y,
         right: NaN,
         bottom: 0,
-        left: $$.isLegendRight ? $$.currentWidth - legendWidth : $$.isLegendInset ? insetLegendPosition.left : 0
+        left: x < 0 ? 0 : x
     };
 };
 ChartInternal.prototype.transformLegend = function (withTransition) {
     var $$ = this;
     (withTransition ? $$.legend.transition() : $$.legend).attr("transform", $$.getTranslate('legend'));
 };
-ChartInternal.prototype.updateLegendStep = function (step) {
-    this.legendStep = step;
-};
-ChartInternal.prototype.updateLegendItemWidth = function (w) {
-    this.legendItemWidth = w;
-};
-ChartInternal.prototype.updateLegendItemHeight = function (h) {
-    this.legendItemHeight = h;
-};
 ChartInternal.prototype.getLegendWidth = function () {
     var $$ = this;
-    return $$.config.legend_show ? $$.isLegendRight || $$.isLegendInset ? $$.legendItemWidth * ($$.legendStep + 1) : $$.currentWidth : 0;
+
+    if ($$.config.legend_show) {
+        return !$$.isLegendHorizontal || $$.isLegendInset ? $$.legendSecondLength : $$.legendLength;
+    }
+
+    return 0;
 };
 ChartInternal.prototype.getLegendHeight = function () {
-    var $$ = this, h = 0;
+    var $$ = this;
+
     if ($$.config.legend_show) {
-        if ($$.isLegendRight) {
-            h = $$.currentHeight;
-        } else {
-            h = Math.max(20, $$.legendItemHeight) * ($$.legendStep + 1);
-        }
+        return (!$$.isLegendHorizontal || $$.isLegendInset ? $$.legendLength : $$.legendSecondLength) + ($$.legendTitleHeight || 0);
     }
-    return h;
+
+    return 0;
 };
 ChartInternal.prototype.opacityForLegend = function (legendItem) {
     return legendItem.classed(CLASS.legendItemHidden) ? null : 1;
@@ -118,10 +135,12 @@ ChartInternal.prototype.clearLegendItemTextBoxCache = function () {
 ChartInternal.prototype.updateLegend = function (targetIds, options, transitions) {
     var $$ = this, config = $$.config;
     var xForLegend, xForLegendText, xForLegendRect, yForLegend, yForLegendText, yForLegendRect, x1ForLegendTile, x2ForLegendTile, yForLegendTile;
-    var paddingTop = 4, paddingRight = 10, maxWidth = 0, maxHeight = 0, posMin = 10, tileWidth = config.legend_item_tile_width + 5;
-    var l, totalLength = 0, offsets = {}, widths = {}, heights = {}, margins = [0], steps = {}, step = 0;
+    var textPaddingRight = 5, maxWidth = 0, maxHeight = 0, minRowMargin = 0, tilePaddingRight = 5, tilePaddingLeft = 5, itemPaddingBottom = 2, itemPaddingTop = 4, titlePaddingBottom = 3;
+    var l, itemsOffsets = {}, itemsWidths = {}, itemsHeights = {}, rowsMargins = [0], rowsIndexes = {}, rowIndex = 0;
     var withTransition, withTransitionForTransform;
-    var texts, rects, tiles, background;
+    var texts, rects, tiles, background, legendTitle, legendTitleTextBox;
+    var minMargin = null, legendAreaLength;
+    var totalRowLength = 0, totalSecondLength = 0;
 
     // Skip elements when their name is set to null
     targetIds = targetIds.filter(function(id) {
@@ -134,65 +153,103 @@ ChartInternal.prototype.updateLegend = function (targetIds, options, transitions
 
     function getTextBox(textElement, id) {
         if (!$$.legendItemTextBox[id]) {
-            $$.legendItemTextBox[id] = $$.getTextRect(textElement.textContent, CLASS.legendItem, textElement);
+            $$.legendItemTextBox[id] = $$.getTextRect(textElement.textContent, CLASS.legendItemText, textElement);
         }
         return $$.legendItemTextBox[id];
     }
 
-    function updatePositions(textElement, id, index) {
-        var reset = index === 0, isLast = index === targetIds.length - 1,
+    function updateItemPosition(textElement, id, index) {
+        var reset = index === 0,
             box = getTextBox(textElement, id),
-            itemWidth = box.width + tileWidth + (isLast && !($$.isLegendRight || $$.isLegendInset) ? 0 : paddingRight) + config.legend_padding,
-            itemHeight = box.height + paddingTop,
-            itemLength = $$.isLegendRight || $$.isLegendInset ? itemHeight : itemWidth,
-            areaLength = $$.isLegendRight || $$.isLegendInset ? $$.getLegendHeight() : $$.getLegendWidth(),
-            margin, maxLength;
+            itemWidth = tilePaddingLeft + config.legend_item_tile_width + tilePaddingRight + box.width + textPaddingRight + config.legend_padding,
+            itemHeight = itemPaddingTop + Math.max(box.height, config.legend_item_tile_height || 0) + itemPaddingBottom + config.legend_padding,
+            itemLength, itemSecondLength, rowMargin, maxLength;
 
-        // MEMO: care about condifion of step, totalLength
-        function updateValues(id, withoutStep) {
-            if (!withoutStep) {
-                margin = (areaLength - totalLength - itemLength) / 2;
-                if (margin < posMin) {
-                    margin = (areaLength - itemLength) / 2;
-                    totalLength = 0;
-                    step++;
+        if (!$$.isLegendHorizontal || $$.isLegendInset) {
+            itemLength = itemHeight;
+            itemSecondLength = itemWidth;
+        } else {
+            itemLength = itemWidth;
+            itemSecondLength = itemHeight;
+        }
+
+        // MEMO: care about condition of step, totalLength
+        function updateValues(id, withoutRowChange) {
+            if (!withoutRowChange) {
+                rowMargin = (legendAreaLength - totalRowLength - itemLength) / 2;
+                if (rowMargin < minRowMargin) {
+                    rowMargin = (legendAreaLength - itemLength) / 2;
+                    rowIndex++;
+                    totalRowLength = 0;
+                    totalSecondLength += itemSecondLength;
                 }
             }
-            steps[id] = step;
-            margins[step] = $$.isLegendInset ? 10 : margin;
-            offsets[id] = totalLength;
-            totalLength += itemLength;
+            
+            rowsIndexes[id] = rowIndex;
+            rowsMargins[rowIndex] = $$.isLegendInset ? 0 : rowMargin;
+            itemsOffsets[id] = totalRowLength;
+            totalRowLength += itemLength;
+
+            if(totalRowLength > $$.legendLength){
+                $$.legendLength = totalRowLength;
+            }
+
+            if(totalSecondLength > $$.legendSecondLength){
+                $$.legendSecondLength = totalSecondLength;
+            }
+
+            if (minMargin === null || rowsMargins[rowIndex] < minMargin){
+                minMargin = rowsMargins[rowIndex];
+            }
         }
 
         if (reset) {
-            totalLength = 0;
-            step = 0;
+            rowIndex = 0;
             maxWidth = 0;
             maxHeight = 0;
+            totalRowLength = 0;
+            totalSecondLength = 0;
+            $$.legendLength = 0;
+            $$.legendSecondLength = 0;
+            minMargin = null;
         }
 
         if (config.legend_show && !$$.isLegendToShow(id)) {
-            widths[id] = heights[id] = steps[id] = offsets[id] = 0;
+            itemsWidths[id] = itemsHeights[id] = rowsIndexes[id] = itemsOffsets[id] = 0;
             return;
         }
 
-        widths[id] = itemWidth;
-        heights[id] = itemHeight;
+        if(itemSecondLength > totalSecondLength){
+            totalSecondLength = itemSecondLength;
+        }
 
-        if (!maxWidth || itemWidth >= maxWidth) { maxWidth = itemWidth; }
-        if (!maxHeight || itemHeight >= maxHeight) { maxHeight = itemHeight; }
-        maxLength = $$.isLegendRight || $$.isLegendInset ? maxHeight : maxWidth;
+        itemsWidths[id] = itemWidth;
+        itemsHeights[id] = itemHeight;
+
+        if (!maxWidth || itemWidth > maxWidth) { 
+            maxWidth = itemWidth;
+        }
+
+        if (!maxHeight || itemHeight > maxHeight) { 
+            maxHeight = itemHeight;
+        }
+
+        maxLength = !$$.isLegendHorizontal || $$.isLegendInset ? maxHeight : maxWidth;
+
+        if ($$.isLegendInset) {
+            legendAreaLength = config.legend_inset_step ? config.legend_inset_step * maxHeight : $$.currentHeight - config.legend_inset_y;
+        }
 
         if (config.legend_equally) {
-            Object.keys(widths).forEach(function (id) { widths[id] = maxWidth; });
-            Object.keys(heights).forEach(function (id) { heights[id] = maxHeight; });
-            margin = (areaLength - maxLength * targetIds.length) / 2;
-            if (margin < posMin) {
+            Object.keys(itemsWidths).forEach(function (id) { itemsWidths[id] = maxWidth; });
+            Object.keys(itemsHeights).forEach(function (id) { itemsHeights[id] = maxHeight; });
+            rowMargin = (legendAreaLength - maxLength * targetIds.length) / 2;
+            if (rowMargin < minRowMargin) {
                 totalLength = 0;
-                step = 0;
+                rowIndex = 0;
+                $$.updateLegendStep(rowIndex);
                 targetIds.forEach(function (id) { updateValues(id); });
-            }
-            else {
+            } else {
                 updateValues(id, true);
             }
         } else {
@@ -200,28 +257,29 @@ ChartInternal.prototype.updateLegend = function (targetIds, options, transitions
         }
     }
 
-    if ($$.isLegendInset) {
-        step = config.legend_inset_step ? config.legend_inset_step : targetIds.length;
-        $$.updateLegendStep(step);
+    if ($$.isLegendHorizontal){
+        legendAreaLength = $$.isLegendLeft || $$.isLegendRight ? $$.currentWidth * 2 / 3 : $$.currentWidth;
+    } else {
+        legendAreaLength = ($$.isLegendLeft || $$.isLegendRight ? $$.currentHeight : $$.currentHeight * 2 / 3) - $$.legendTitleHeight;
     }
 
-    if ($$.isLegendRight) {
-        xForLegend = function (id) { return maxWidth * steps[id]; };
-        yForLegend = function (id) { return margins[steps[id]] + offsets[id]; };
-    } else if ($$.isLegendInset) {
-        xForLegend = function (id) { return maxWidth * steps[id] + 10; };
-        yForLegend = function (id) { return margins[steps[id]] + offsets[id]; };
+    if (!$$.isLegendHorizontal || $$.isLegendInset) {
+        xForLegend = function (id) { return maxWidth * rowsIndexes[id]; };
+        yForLegend = function (id) { return rowsMargins[rowsIndexes[id]] + itemsOffsets[id] + $$.legendTitleHeight - minMargin; };
     } else {
-        xForLegend = function (id) { return margins[steps[id]] + offsets[id]; };
-        yForLegend = function (id) { return maxHeight * steps[id]; };
+        xForLegend = function (id) { return rowsMargins[rowsIndexes[id]] + itemsOffsets[id] - minMargin; };
+        yForLegend = function (id) { return maxHeight * rowsIndexes[id] + $$.legendTitleHeight; };        
     }
-    xForLegendText = function (id, i) { return xForLegend(id, i) + 4 + config.legend_item_tile_width; };
-    yForLegendText = function (id, i) { return yForLegend(id, i) + 9; };
+
+    x1ForLegendTile = function (id, i) { return xForLegend(id, i) + tilePaddingLeft; };
+    x2ForLegendTile = function (id, i) { return x1ForLegendTile(id, i) + config.legend_item_tile_width; };
+    yForLegendTile = function (id, i) { return itemPaddingTop + yForLegend(id, i) + config.legend_item_tile_height / 2; };
+
+    xForLegendText = function (id, i) { return x2ForLegendTile(id, i) + tilePaddingRight; };
+    yForLegendText = function (id, i) { return itemPaddingTop + yForLegend(id, i) + config.legend_item_tile_height; };
+
     xForLegendRect = function (id, i) { return xForLegend(id, i); };
-    yForLegendRect = function (id, i) { return yForLegend(id, i) - 5; };
-    x1ForLegendTile = function (id, i) { return xForLegend(id, i) - 2; };
-    x2ForLegendTile = function (id, i) { return xForLegend(id, i) - 2 + config.legend_item_tile_width; };
-    yForLegendTile = function (id, i) { return yForLegend(id, i) + 4; };
+    yForLegendRect = function (id, i) { return yForLegend(id, i); };
 
     // Define g for legend area
     l = $$.legend.selectAll('.' + CLASS.legendItem)
@@ -264,75 +322,86 @@ ChartInternal.prototype.updateLegend = function (targetIds, options, transitions
             }
         });
     l.append('text')
+        .attr("class", CLASS.legendItemText)
         .text(function (id) { return isDefined(config.data_names[id]) ? config.data_names[id] : id; })
-        .each(function (id, i) { updatePositions(this, id, i); })
-        .style("pointer-events", "none")
-        .attr('x', $$.isLegendRight || $$.isLegendInset ? xForLegendText : -200)
-        .attr('y', $$.isLegendRight || $$.isLegendInset ? -200 : yForLegendText);
+        .each(function (id, i) { updateItemPosition(this, id, i); })
+        .style("pointer-events", "none");
     l.append('rect')
         .attr("class", CLASS.legendItemEvent)
-        .style('fill-opacity', 0)
-        .attr('x', $$.isLegendRight || $$.isLegendInset ? xForLegendRect : -200)
-        .attr('y', $$.isLegendRight || $$.isLegendInset ? -200 : yForLegendRect);
+        .style('fill-opacity', 0);
     l.append('line')
         .attr('class', CLASS.legendItemTile)
         .style('stroke', $$.color)
         .style("pointer-events", "none")
-        .attr('x1', $$.isLegendRight || $$.isLegendInset ? x1ForLegendTile : -200)
-        .attr('y1', $$.isLegendRight || $$.isLegendInset ? -200 : yForLegendTile)
-        .attr('x2', $$.isLegendRight || $$.isLegendInset ? x2ForLegendTile : -200)
-        .attr('y2', $$.isLegendRight || $$.isLegendInset ? -200 : yForLegendTile)
         .attr('stroke-width', config.legend_item_tile_height);
 
-    // Set background for inset legend
+    // Set background for legend
     background = $$.legend.select('.' + CLASS.legendBackground + ' rect');
-    if ($$.isLegendInset && maxWidth > 0 && background.size() === 0) {
+    if (($$.isLegendInset || config.legend_showBackgroundRect) && maxWidth > 0 && background.size() === 0) {
         background = $$.legend.insert('g', '.' + CLASS.legendItem)
             .attr("class", CLASS.legendBackground)
             .append('rect');
     }
 
-    texts = $$.legend.selectAll('text')
+    legendTitle = $$.legend.select('.' + CLASS.legendTitle);
+    if(!$$.isLegendInset && config.legend_title && legendTitle.size() === 0 && maxWidth > 0) {
+        legendTitle = $$.legend.insert("text", '.' + CLASS.legendItem)
+            .attr("class", CLASS.legendTitle);
+
+        legendTitle.append("tspan")
+            .text(config.legend_title);
+
+        legendTitleTextBox = legendTitle.node().getBoundingClientRect();
+        $$.legendTitleHeight = legendTitleTextBox.height + titlePaddingBottom;
+        $$.legendTitleWidth = legendTitleTextBox.width;
+    }
+
+    texts = $$.legend.selectAll('text.' + CLASS.legendItemText)
         .data(targetIds)
         .text(function (id) { return isDefined(config.data_names[id]) ? config.data_names[id] : id; }) // MEMO: needed for update
-        .each(function (id, i) { updatePositions(this, id, i); });
+        .each(function (id, i) { updateItemPosition(this, id, i); });
+
     (withTransition ? texts.transition() : texts)
         .attr('x', xForLegendText)
         .attr('y', yForLegendText);
 
     rects = $$.legend.selectAll('rect.' + CLASS.legendItemEvent)
         .data(targetIds);
+
     (withTransition ? rects.transition() : rects)
-        .attr('width', function (id) { return widths[id]; })
-        .attr('height', function (id) { return heights[id]; })
+        .attr('width', function (id) { return itemsWidths[id]; })
+        .attr('height', function (id) { return itemsHeights[id]; })
         .attr('x', xForLegendRect)
         .attr('y', yForLegendRect);
 
     tiles = $$.legend.selectAll('line.' + CLASS.legendItemTile)
             .data(targetIds);
-        (withTransition ? tiles.transition() : tiles)
-            .style('stroke', $$.levelColor ? function(id) {
-                return $$.levelColor($$.cache[id].values[0].value);
-            } : $$.color)
-            .attr('x1', x1ForLegendTile)
-            .attr('y1', yForLegendTile)
-            .attr('x2', x2ForLegendTile)
-            .attr('y2', yForLegendTile);
 
-    if (background) {
+    (withTransition ? tiles.transition() : tiles)
+        .style('stroke', $$.levelColor ? function (id) {
+            return $$.levelColor($$.cache[id].values[0].value);
+        } : $$.color)
+        .attr('x1', x1ForLegendTile)
+        .attr('y1', yForLegendTile)
+        .attr('x2', x2ForLegendTile)
+        .attr('y2', yForLegendTile);
+
+    if (!$$.isLegendInset && config.legend_title && maxWidth > 0) {
+        legendTitle.attr('x', ($$.getLegendWidth() - $$.legendTitleWidth) / 2).attr('y', $$.legendTitleHeight - titlePaddingBottom);
+    }
+
+    if(($$.isLegendInset || config.legend_showBackgroundRect) && maxWidth > 0 && background){
         (withTransition ? background.transition() : background)
-            .attr('height', $$.getLegendHeight() - 12)
-            .attr('width', maxWidth * (step + 1) + 10);
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('height', $$.getLegendHeight())
+            .attr('width', $$.getLegendWidth());
     }
 
     // toggle legend state
     $$.legend.selectAll('.' + CLASS.legendItem)
         .classed(CLASS.legendItemHidden, function (id) { return !$$.isTargetToShow(id); });
 
-    // Update all to reflect change of legend
-    $$.updateLegendItemWidth(maxWidth);
-    $$.updateLegendItemHeight(maxHeight);
-    $$.updateLegendStep(step);
     // Update size and scale
     $$.updateSizes();
     $$.updateScales();
