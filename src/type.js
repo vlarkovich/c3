@@ -92,3 +92,6 @@ ChartInternal.prototype.lineOrScatterData = function (d) {
 ChartInternal.prototype.barOrLineData = function (d) {
     return this.isBarType(d) || this.isLineType(d) ? d.values : [];
 };
+ChartInternal.prototype.barOrLineOrScatterData = function (d) {
+    return this.isBarType(d) || this.isLineType(d) || this.isScatterType(d) ? d.values : [];
+};
