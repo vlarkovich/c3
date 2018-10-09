@@ -16,7 +16,7 @@ ChartInternal.prototype.getCurrentPaddingTop = function () {
         config = $$.config,
         padding = isValue(config.padding_top) ? config.padding_top : 0;
     if ($$.title && $$.title.node()) {
-        padding += $$.getTitlePadding();
+        padding += $$.getTitlePadding() + 5;
     }
     return padding;
 };

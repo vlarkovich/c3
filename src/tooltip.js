@@ -162,7 +162,7 @@ ChartInternal.prototype.tooltipPosition = function (dataToShow, tWidth, tHeight,
     // Determin tooltip position
     if (forArc) {
         tooltipLeft = $$.arcMarginX + mouse[0];
-        tooltipTop = ($$.isLegendTop ? $$.getLegendHeight() : 0) + ($$.hasType('gauge') ? $$.height : $$.height / 2) + mouse[1] - tHeight;
+        tooltipTop = $$.margin.top + ($$.hasType('gauge') ? $$.arcHeight : $$.arcHeight / 2) + mouse[1] - tHeight;
     } else {
         svgLeft = $$.getSvgLeft(true);
         if (config.axis_rotated) {
