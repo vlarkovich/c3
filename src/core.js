@@ -138,7 +138,9 @@ ChartInternal.prototype.initParams = function() {
     $$.isLegendInsetLeft = config.legend_inset_anchor === 'top-left' || config.legend_inset_anchor === 'bottom-left';
     $$.isLegendHorizontal = config.legend_horizontally === true ? true : config.legend_horizontally === false || $$.isLegendLeft || $$.isLegendRight || $$.isLegendInset ? false : true;
     $$.legendLength = 0;
-    $$.legendSecondLength = 0;
+    $$.legendStep = 0;
+    $$.legendItemMaxWidth = 0;
+    $$.legendItemMaxHeight = 0;
 
     $$.currentMaxTickWidths = {
         x: 0,
@@ -383,12 +385,12 @@ ChartInternal.prototype.updateSizes = function() {
         top: 5 + $$.getHorizontalAxisHeight('y2') + $$.getCurrentPaddingTop() + legendHeightForTop,
         right: hasArc ? 0 : $$.getCurrentPaddingRight(),
         bottom: $$.getHorizontalAxisHeight('y') + legendHeightForBottom + $$.getCurrentPaddingBottom(),
-        left: subchartHeight + (hasArc ? $$.isLegendLeft ? legendWidth : 0 : $$.getCurrentPaddingLeft())
+        left: subchartHeight + (hasArc ? 0 : $$.getCurrentPaddingLeft())
     } : {
         top: 9 + $$.getCurrentPaddingTop() + legendHeightForTop, // for top tick text
-        right: hasArc ? $$.isLegendLeft ? 20 : 0 : $$.getCurrentPaddingRight(),
+        right: hasArc ? 0 : $$.getCurrentPaddingRight(),
         bottom: xAxisHeight + subchartHeight + legendHeightForBottom + $$.getCurrentPaddingBottom(),
-        left: hasArc ? $$.isLegendLeft ? legendWidth + 5 : 0 : $$.getCurrentPaddingLeft()
+        left: hasArc ? 0 : $$.getCurrentPaddingLeft()
     };
 
     // for subchart
@@ -396,7 +398,7 @@ ChartInternal.prototype.updateSizes = function() {
         top: $$.margin.top,
         right: NaN,
         bottom: 20 + legendHeightForBottom,
-        left: $$.rotated_padding_left + ($$.isLegendLeft ? $$.getLegendWidth() + 20 : 0)
+        left: $$.rotated_padding_left + ($$.isLegendLeft ? legendWidth + 20 : 0)
     } : {
         top: $$.currentHeight - subchartHeight - legendHeightForBottom,
         right: NaN,
@@ -434,7 +436,7 @@ ChartInternal.prototype.updateSizes = function() {
     }
 
     // for arc
-    $$.arcWidth = $$.width - ($$.isLegendRight ? legendWidth + 10 : $$.isLegendLeft ? 10 : 0);
+    $$.arcWidth = $$.width - ($$.isLegendRight || $$.isLegendLeft ? legendWidth + 10 : 0);
     $$.arcHeight = $$.height - ($$.isLegendRight || $$.isLegendLeft ? 0 : 10);
     if ($$.hasType('gauge') && !config.gauge_fullCircle) {
         $$.arcHeight += $$.height - $$.getGaugeLabelHeight();
@@ -443,8 +445,14 @@ ChartInternal.prototype.updateSizes = function() {
         $$.updateRadius();
     }
 
-    if ($$.isLegendRight && hasArc) {
-        $$.margin3.left = $$.arcWidth / 2 + $$.radiusExpanded * 1.1;
+    if (hasArc && $$.isLegendRight) {
+        $$.arcMarginX = Math.min($$.width - legendWidth - $$.radiusExpanded * 1.1, $$.width / 2);
+        $$.margin3.left = $$.arcMarginX + $$.radiusExpanded * 1.1;
+    } else if (hasArc && $$.isLegendLeft) {
+        $$.arcMarginX = Math.max(legendWidth + $$.radiusExpanded * 1.1, $$.width / 2);
+        $$.margin3.left = Math.max($$.width / 2 - $$.radiusExpanded * 1.1 - legendWidth, 0);
+    } else {
+        $$.arcMarginX = $$.width / 2;
     }
 };
 
@@ -814,7 +822,7 @@ ChartInternal.prototype.getTranslate = function(target) {
         x = 0;
         y = config.axis_rotated ? 0 : $$.height2;
     } else if (target === 'arc') {
-        x = $$.arcWidth / 2;
+        x = $$.arcMarginX;
         y = $$.arcHeight / 2 - ($$.hasType('gauge') ? 6 : 0); // to prevent wrong display of min and max label
     }
     return "translate(" + x + "," + y + ")";

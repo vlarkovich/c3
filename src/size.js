@@ -25,7 +25,9 @@ ChartInternal.prototype.getCurrentPaddingBottom = function () {
     return isValue(config.padding_bottom) ? config.padding_bottom : 0;
 };
 ChartInternal.prototype.getCurrentPaddingLeft = function (withoutRecompute) {
-    var $$ = this, config = $$.config, legendWidthOnLeft = $$.isLegendLeft ? $$.getLegendWidth() + 20 : 0;
+    var $$ = this, 
+        config = $$.config, 
+        legendWidthOnLeft = $$.isLegendLeft ? $$.getLegendWidth() : 0;
     if (isValue(config.padding_left)) {
         return config.padding_left;
     } else if (config.axis_rotated) {
@@ -37,8 +39,10 @@ ChartInternal.prototype.getCurrentPaddingLeft = function (withoutRecompute) {
     }
 };
 ChartInternal.prototype.getCurrentPaddingRight = function () {
-    var $$ = this, config = $$.config,
-        defaultPadding = 10, legendWidthOnRight = $$.isLegendRight ? $$.getLegendWidth() + 20 : 0;
+    var $$ = this, 
+        config = $$.config,
+        defaultPadding = 10, 
+        legendWidthOnRight = $$.isLegendRight ? $$.getLegendWidth() : 0;
     if (isValue(config.padding_right)) {
         return config.padding_right + 1; // 1 is needed not to hide tick line
     } else if (config.axis_rotated) {

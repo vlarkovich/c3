@@ -15,14 +15,25 @@
     <div id="chart10"></div>
     <div id="chart11"></div>
     <div id="chart12"></div>
+    <div id="chart13"></div>
+    <div id="chart14"></div>
+    <div id="chart15"></div>
+    <div id="chart16"></div>
 
     <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
     <script src="../js/c3.js"></script>
     <script>
 
       var columns = [];
-      for (var i = 0; i < 28; i++ ) {
-        columns[i] = ['datahogehogeohgeohoge' + i, 10 * i, 20 * i];
+      var dataName;
+      for (var i = 0; i < 28; i++) {
+        if (i < 10) {
+          dataName = 'data';
+        } else {
+          dataName = 'datahogehogeohgeohoge';
+        }
+
+        columns[i] = [dataName + i, 10 * i, 20 * i, 30 * i];
       }
 
       c3.generate({
@@ -170,16 +181,75 @@
         }
       });
 
-      c3.generate({
+      let chart = c3.generate({
         bindto: '#chart12',
         data: {
-          columns: columns,
+          columns: columns
+        },
+        tooltip: {
+          grouped: false
         },
         legend: {
           position: 'top',
           showBackgroundRect: true,
           title: "The best legend title",
           horizontally: false
+        }
+      });
+
+      c3.generate({
+        bindto: '#chart13',
+        data: {
+          columns: columns,
+          type: "pie"
+        },
+        tooltip: {
+          grouped: false
+        },
+        legend: {
+          position: 'top'
+        }
+      });
+
+      c3.generate({
+        bindto: '#chart14',
+        data: {
+          columns: columns,
+          type: "pie"
+        },
+        tooltip: {
+          grouped: false
+        },
+        legend: {
+          position: 'left'
+        }
+      });
+
+      c3.generate({
+        bindto: '#chart15',
+        data: {
+          columns: columns,
+          type: "pie"
+        },
+        tooltip: {
+          grouped: false
+        },
+        legend: {
+          position: 'right'
+        }
+      });
+
+      c3.generate({
+        bindto: '#chart16',
+        data: {
+          columns: columns,
+          type: "pie"
+        },
+        tooltip: {
+          grouped: false
+        },
+        legend: {
+          position: 'bottom'
         }
       });
 
