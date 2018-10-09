@@ -25,10 +25,10 @@ ChartInternal.prototype.updateTargetsForText = function (targets) {
 };
 ChartInternal.prototype.updateText = function (xForText, yForText, durationForExit) {
     var $$ = this, config = $$.config,
-        barOrLineData = $$.barOrLineData.bind($$),
+        barOrLineOrScatterData = $$.barOrLineOrScatterData.bind($$),
         classText = $$.classText.bind($$);
     var mainText = $$.main.selectAll('.' + CLASS.texts).selectAll('.' + CLASS.text)
-        .data(barOrLineData);
+        .data(barOrLineOrScatterData);
     var mainTextEnter = mainText.enter().append('text')
         .attr("class", classText)
         .attr('text-anchor', function (d) { return config.axis_rotated ? (d.value < 0 ? 'end' : 'start') : 'middle'; })
