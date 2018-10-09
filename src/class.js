@@ -72,6 +72,8 @@ export default {
     legendItemTile: 'c3-legend-item-tile',
     legendItemHidden: 'c3-legend-item-hidden',
     legendItemFocused: 'c3-legend-item-focused',
+    legendTitle: 'c3-legend-title',
+    legendItemText: 'c3-legend-item-text',
     dragarea: 'c3-dragarea',
     EXPANDED: '_expanded_',
     SELECTED: '_selected_',

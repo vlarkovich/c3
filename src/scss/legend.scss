@@ -1,6 +1,6 @@
 .c3-legend-item {
-  font-size: 12px;
 }
+
 .c3-legend-item-hidden {
   opacity: 0.15;
 }
@@ -10,4 +10,12 @@
   fill: white;
   stroke: lightgray;
   stroke-width: 1
+}
+
+.c3-legend-item-text {
+  font-size: 12px;
+}
+
+.c3-legend-title {
+  font: 14px sans-serif;
 }

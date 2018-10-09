@@ -156,38 +156,38 @@ ChartInternal.prototype.tooltipPosition = function (dataToShow, tWidth, tHeight,
     var $$ = this,
         config = $$.config,
         d3 = $$.d3;
-    var svgLeft, tooltipLeft, tooltipRight, tooltipTop, chartRight;
+    var svgLeft, tooltipLeft, tooltipTop, chartRight;
     var forArc = $$.hasArcType(),
         mouse = d3.mouse(element);
     // Determin tooltip position
     if (forArc) {
-        tooltipLeft = (($$.width - ($$.isLegendRight ? $$.getLegendWidth() : 0)) / 2) + mouse[0];
-        tooltipTop = ($$.hasType('gauge') ? $$.height : $$.height / 2) + mouse[1] + 20;
+        tooltipLeft = $$.arcMarginX + mouse[0];
+        tooltipTop = $$.margin.top + ($$.hasType('gauge') ? $$.arcHeight : $$.arcHeight / 2) + mouse[1] - tHeight;
     } else {
         svgLeft = $$.getSvgLeft(true);
         if (config.axis_rotated) {
-            tooltipLeft = svgLeft + mouse[0] + 100;
-            tooltipRight = tooltipLeft + tWidth;
+            tooltipLeft = svgLeft + $$.getCurrentPaddingLeft(true) + mouse[0];
             chartRight = $$.currentWidth - $$.getCurrentPaddingRight();
-            tooltipTop = $$.x(dataToShow[0].x) + 20;
+            tooltipTop = $$.margin.top + $$.x(dataToShow[0].x) - tHeight;
         } else {
-            tooltipLeft = svgLeft + $$.getCurrentPaddingLeft(true) + $$.x(dataToShow[0].x) + 20;
-            tooltipRight = tooltipLeft + tWidth;
+            tooltipLeft = svgLeft + $$.getCurrentPaddingLeft(true) + $$.x(dataToShow[0].x);
             chartRight = svgLeft + $$.currentWidth - $$.getCurrentPaddingRight();
-            tooltipTop = mouse[1] + 15;
+            tooltipTop = $$.margin.top + mouse[1] - tHeight;
         }
 
-        if (tooltipRight > chartRight) {
+        if (tooltipLeft + tWidth > chartRight) {
             // 20 is needed for Firefox to keep tooltip width
-            tooltipLeft -= tooltipRight - chartRight + 20;
+            tooltipLeft -= tooltipLeft + tWidth - chartRight + 20;
         }
         if (tooltipTop + tHeight > $$.currentHeight) {
-            tooltipTop -= tHeight + 30;
+            tooltipTop -= tHeight;
         }
     }
+
     if (tooltipTop < 0) {
         tooltipTop = 0;
     }
+
     return {
         top: tooltipTop,
         left: tooltipLeft
