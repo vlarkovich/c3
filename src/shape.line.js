@@ -274,7 +274,7 @@ ChartInternal.prototype.generateDrawArea = function (areaIndices, isSub) {
     };
 };
 ChartInternal.prototype.getAreaBaseValue = function () {
-    return 0;
+    return this.config.area_baseValue || 0;
 };
 ChartInternal.prototype.generateGetAreaPoints = function (areaIndices, isSub) { // partial duplication of generateGetBarPoints
     var $$ = this, config = $$.config,

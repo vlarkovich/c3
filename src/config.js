@@ -181,6 +181,7 @@ ChartInternal.prototype.getDefaultConfig = function () {
         // area
         area_zerobased: true,
         area_above: false,
+        area_baseValue: 0,
         // pie
         pie_label_show: true,
         pie_label_format: undefined,

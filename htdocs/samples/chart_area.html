@@ -11,8 +11,10 @@
     <div id="chart3"></div>
     <h3>Not zerobased because of axis.y.min</h3>
     <div id="chart4"></div>
-    <h3>+/- vaulues</h3>
+    <h3>+/- values</h3>
     <div id="chart5"></div>
+    <h3>+/- values with negative base value</h3>
+    <div id="chart6"></div>
 
     <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
     <script src="../js/c3.js"></script>
@@ -80,6 +82,20 @@
             ['data2', -130, -100, 140, -200, 150, -50]
           ],
           type: 'area'
+        }
+      });
+
+      var chart6 = c3.generate({
+        bindto: '#chart6',
+        data: {
+          columns: [
+            ['data1', -300, 350, -300, 0, 0, 0],
+            ['data2', -130, -100, 140, -200, 150, -50]
+          ],
+          type: 'area'
+        },
+        area: {
+          baseValue: -200
         }
       });
 
