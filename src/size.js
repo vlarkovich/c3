@@ -26,31 +26,28 @@ ChartInternal.prototype.getCurrentPaddingBottom = function () {
 };
 ChartInternal.prototype.getCurrentPaddingLeft = function (withoutRecompute) {
     var $$ = this, 
-        config = $$.config, 
+        config = $$.config,
+        defaultPadding = isValue(config.padding_left) ? config.padding_left : 0,
         legendWidthOnLeft = $$.isLegendLeft ? $$.getLegendWidth() : 0;
-    if (isValue(config.padding_left)) {
-        return config.padding_left;
-    } else if (config.axis_rotated) {
-        return legendWidthOnLeft + (!config.axis_x_show ? 1 : Math.max(ceil10($$.getAxisWidthByAxisId('x', withoutRecompute)), 40));
+    if (config.axis_rotated) {
+        return defaultPadding + legendWidthOnLeft + (!config.axis_x_show ? 1 : Math.max(ceil10($$.getAxisWidthByAxisId('x', withoutRecompute)), 40));
     } else if (!config.axis_y_show || config.axis_y_inner) { // && !config.axis_rotated
-        return legendWidthOnLeft + ($$.axis.getYAxisLabelPosition().isOuter ? 30 : 1);
+        return defaultPadding + legendWidthOnLeft + ($$.axis.getYAxisLabelPosition().isOuter ? 20 : 1);
     } else {
-        return ceil10($$.getAxisWidthByAxisId('y', withoutRecompute)) + legendWidthOnLeft;
+        return ceil10($$.getAxisWidthByAxisId('y', withoutRecompute)) + legendWidthOnLeft + defaultPadding;
     }
 };
 ChartInternal.prototype.getCurrentPaddingRight = function () {
     var $$ = this, 
         config = $$.config,
-        defaultPadding = 10, 
+        defaultPadding = isValue(config.padding_right) ? config.padding_right + 1 : 10, // 1 is needed not to hide tick line
         legendWidthOnRight = $$.isLegendRight ? $$.getLegendWidth() : 0;
-    if (isValue(config.padding_right)) {
-        return config.padding_right + 1; // 1 is needed not to hide tick line
-    } else if (config.axis_rotated) {
+    if (config.axis_rotated) {
         return defaultPadding + legendWidthOnRight;
     } else if (!config.axis_y2_show || config.axis_y2_inner) { // && !config.axis_rotated
-        return 2 + legendWidthOnRight + ($$.axis.getY2AxisLabelPosition().isOuter ? 20 : 0);
+        return defaultPadding + legendWidthOnRight + ($$.axis.getY2AxisLabelPosition().isOuter ? 20 : 0);
     } else {
-        return ceil10($$.getAxisWidthByAxisId('y2')) + legendWidthOnRight;
+        return ceil10($$.getAxisWidthByAxisId('y2')) + legendWidthOnRight + defaultPadding;
     }
 };
 
