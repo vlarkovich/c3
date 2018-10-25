@@ -1,11 +1,17 @@
 .c3-grid line {
   stroke: #aaa;
 }
+.c3-grid-minor line {
+  stroke: #aaa;
+}
 .c3-grid text {
   fill: #aaa;
 }
 .c3-xgrid, .c3-ygrid {
   stroke-dasharray: 3 3;
+}
+.c3-xgrid-minor, .c3-ygrid-minor {
+  stroke-dasharray: 2 2;
 }
 .c3-xgrid-focus {
 }

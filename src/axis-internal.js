@@ -8,9 +8,11 @@ function AxisInternal(component, params) {
     internal.range;
     internal.orient = "bottom";
     internal.innerTickSize = 6;
+    internal.minorInnerTickSize = 4;
     internal.outerTickSize = this.params.withOuterTick ? 6 : 0;
     internal.tickPadding = 3;
     internal.tickValues = null;
+    internal.minorTickValues = null;
     internal.tickFormat;
     internal.tickArguments;
 
@@ -52,6 +54,43 @@ AxisInternal.prototype.generateTicks = function (scale) {
         ticks.unshift(ticks[0] - (ticks[1] - ticks[0]));
     }
     return ticks;
+};
+AxisInternal.prototype.generateMinorTicks = function (scale, majorTickValues) {
+    var internal = this,
+        isTimeSeries = internal.params.isTimeSeries,
+        minorTickValues = [],
+        domain = scale.domain(),
+        onlyOneItem = majorTickValues.length === 1,
+        step = onlyOneItem ? majorTickValues[0] - domain[0] : majorTickValues[1] - majorTickValues[0],
+        current, prev;
+
+    for (let i = 0; i < majorTickValues.length; i++) {
+        if (i === 0) {
+            if (onlyOneItem) {
+                minorTickValues.push(step / 2);
+            } else if (majorTickValues[i] - step / 2 > domain[0]) {
+                minorTickValues.push(majorTickValues[i] - step / 2);
+            }
+        } else if (i === majorTickValues.length - 1) {
+            current = isTimeSeries ? majorTickValues[i].getTime() : majorTickValues[i];
+            prev = isTimeSeries ? majorTickValues[i - 1].getTime() : majorTickValues[i - 1];
+
+            minorTickValues.push((prev + current) / 2);
+
+            if (onlyOneItem) {
+                minorTickValues.push((current + domain[domain.length - 1]) / 2);
+            } else if (current + step / 2 < domain[domain.length - 1]) {
+                minorTickValues.push(current + step / 2);
+            }
+        } else {
+            current = isTimeSeries ? majorTickValues[i].getTime() : majorTickValues[i];
+            prev = isTimeSeries ? majorTickValues[i - 1].getTime() : majorTickValues[i - 1];
+
+            minorTickValues.push((prev + current) / 2);
+        }
+    }
+
+    return minorTickValues;
 };
 AxisInternal.prototype.copyScale = function () {
     var internal = this;
@@ -174,6 +213,11 @@ AxisInternal.prototype.lineY2 = function (d) {
         tickPosition = internal.scale(d) + (internal.tickCentered ? 0 : internal.tickOffset);
     return internal.range[0] < tickPosition && tickPosition < internal.range[1] ? internal.innerTickSize : 0;
 };
+AxisInternal.prototype.minorLineY2 = function (d) {
+    var internal = this,
+        tickPosition = internal.scale(d) + (internal.tickCentered ? 0 : internal.tickOffset);
+    return internal.range[0] < tickPosition && tickPosition < internal.range[1] ? internal.minorInnerTickSize : 0;
+};
 AxisInternal.prototype.textY = function (){
     var internal = this, rotate = internal.tickTextRotate;
     return rotate ? 11.5 - 2.5 * (rotate / 15) * (rotate > 0 ? 1 : -1) : internal.tickLength;
@@ -216,11 +260,20 @@ AxisInternal.prototype.generateAxis = function () {
 
             var ticksValues = internal.tickValues ? internal.tickValues : internal.generateTicks(scale1),
                 ticks = g.selectAll(".tick").data(ticksValues, scale1),
-                tickEnter = ticks.enter().insert("g", ".domain").attr("class", "tick").style("opacity", 1e-6),
+                tickEnter = ticks.enter().insert("g", ".domain").attr("class", "tick").style("opacity", 0),
                 // MEMO: No exit transition. The reason is this transition affects max tick width calculation because old tick will be included in the ticks.
                 tickExit = ticks.exit().remove(),
                 tickUpdate = ticks.merge(tickEnter),
                 tickTransform, tickX, tickY;
+
+            var minorTickValues = internal.generateMinorTicks(scale1, ticksValues);            
+
+            internal.minorTickValues = minorTickValues;
+
+            var minorTicks = g.selectAll(".tick-minor").data(minorTickValues, scale1),
+                minorTickEnter = minorTicks.enter().insert("g", ".domain").attr("class", "tick-minor").style("opacity", 0),
+                minorTickExit = minorTicks.exit().remove(),
+                minorTickUpdate = minorTicks.merge(minorTickEnter);
 
             if (params.isCategory) {
                 internal.tickOffset = Math.ceil((scale1(1) - scale1(0)) / 2);
@@ -235,7 +288,9 @@ AxisInternal.prototype.generateAxis = function () {
             internal.updateTickTextCharSize(g.select('.tick'));
 
             var lineUpdate = tickUpdate.select("line").merge(tickEnter.append("line")),
-                textUpdate = tickUpdate.select("text").merge(tickEnter.append("text"));
+                textUpdate = params.majorTickTextShow ? tickUpdate.select("text").merge(tickEnter.append("text")) : d3.selectAll([]);
+
+            var minorLineUpdate = minorTickUpdate.select("line").merge(minorTickEnter.append("line"))
 
             var tspans = tickUpdate.selectAll('text').selectAll('tspan').data(function (d, i) {
                     return internal.tspanData(d, i, scale1);
@@ -254,7 +309,11 @@ AxisInternal.prototype.generateAxis = function () {
                     tickTransform = internal.axisX;
                     lineUpdate.attr("x1", tickX)
                         .attr("x2", tickX)
-                        .attr("y2", function (d, i) { return internal.lineY2(d, i); });
+                        .attr("y2", function (d, i) { return internal.lineY2(d, i); })
+                        .style("opacity", params.tickMajorShow ? 1 : 0);
+                    minorLineUpdate.attr("x1", tickX)
+                        .attr("x2", tickX)
+                        .attr("y2", function (d, i) { return internal.minorLineY2(d, i); });
                     textUpdate.attr("x", 0)
                         .attr("y", function (d, i) { return internal.textY(d, i); })
                         .attr("transform", function (d, i) { return internal.textTransform(d, i); })
@@ -271,7 +330,11 @@ AxisInternal.prototype.generateAxis = function () {
                     tickTransform = internal.axisX;
                     lineUpdate.attr("x1", tickX)
                         .attr("x2", tickX)
-                        .attr("y2", function (d, i) { return -1 * internal.lineY2(d, i); });
+                        .attr("y2", function (d, i) { return -1 * internal.lineY2(d, i); })
+                        .style("opacity", params.tickMajorShow ? 1 : 0);
+                    minorLineUpdate.attr("x1", tickX)
+                        .attr("x2", tickX)
+                        .attr("y2", function (d, i) { return -1 * internal.minorLineY2(d, i); });
                     textUpdate.attr("x", 0)
                         .attr("y", function (d, i) { return -1 * internal.textY(d, i) - (params.isCategory ? 2 : (internal.tickLength - 2)); })
                         .attr("transform", function (d, i) { return internal.textTransform(d, i); })
@@ -287,6 +350,10 @@ AxisInternal.prototype.generateAxis = function () {
                     tickTransform = internal.axisY;
                     lineUpdate.attr("x2", -internal.innerTickSize)
                         .attr("y1", tickY)
+                        .attr("y2", tickY)
+                        .style("opacity", params.tickMajorShow ? 1 : 0);
+                    minorLineUpdate.attr("x2", -internal.minorInnerTickSize)
+                        .attr("y1", tickY)
                         .attr("y2", tickY);
                     textUpdate.attr("x", -internal.tickLength)
                         .attr("y", internal.tickOffset)
@@ -300,6 +367,10 @@ AxisInternal.prototype.generateAxis = function () {
                 {
                     tickTransform = internal.axisY;
                     lineUpdate.attr("x2", internal.innerTickSize)
+                        .attr("y1", tickY)
+                        .attr("y2", tickY)
+                        .style("opacity", params.tickMajorShow ? 1 : 0);
+                    minorLineUpdate.attr("x2", internal.minorInnerTickSize)
                         .attr("y1", tickY)
                         .attr("y2", tickY);
                     textUpdate.attr("x", internal.tickLength)
@@ -320,10 +391,17 @@ AxisInternal.prototype.generateAxis = function () {
                 scale0 = scale1;
             } else {
                 tickExit.call(tickTransform, scale1, internal.tickOffset);
+                minorTickExit.call(tickTransform, scale1, internal.tickOffset);
             }
+
             tickEnter.call(tickTransform, scale0, internal.tickOffset);
             self = (transition ? tickUpdate.transition(transition) : tickUpdate)
                 .style('opacity', 1)
+                .call(tickTransform, scale1, internal.tickOffset);
+
+            minorTickEnter.call(tickTransform, scale0, internal.tickOffset);
+            (transition ? minorTickUpdate.transition(transition) : minorTickUpdate)
+                .style('opacity', params.tickMinorShow ? 1 : 0)
                 .call(tickTransform, scale1, internal.tickOffset);
         });
         return self;
@@ -383,6 +461,9 @@ AxisInternal.prototype.generateAxis = function () {
             internal.tickValues = x;
         }
         return axis;
+    };
+    axis.tickValuesMinor = function () {
+        return internal.minorTickValues;
     };
     return axis;
 };
