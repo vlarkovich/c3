@@ -10,14 +10,20 @@ ChartInternal.prototype.initGrid = function () {
     if (config.grid_x_show && config.grid_x_major_show) {
         $$.grid.append("g").attr("class", CLASS.xgrids);
     }
-    if (config.grid_x_minor_show) {
+    if (config.grid_x_show && config.grid_x_minor_show) {
         $$.grid.append("g").attr("class", CLASS.xgridsMinor);
     }
     if (config.grid_y_show && config.grid_y_major_show) {
         $$.grid.append('g').attr('class', CLASS.ygrids);
     }
-    if (config.grid_y_minor_show) {
+    if (config.grid_y_show && config.grid_y_minor_show) {
         $$.grid.append('g').attr('class', CLASS.ygridsMinor);
+    }
+    if (config.grid_y2_show && config.grid_y2_major_show) {
+        $$.grid.append('g').attr('class', CLASS.y2grids);
+    }
+    if (config.grid_y2_show && config.grid_y2_minor_show) {
+        $$.grid.append('g').attr('class', CLASS.y2gridsMinor);
     }
     if (config.grid_focus_show) {
         $$.grid.append('g')
@@ -139,37 +145,38 @@ ChartInternal.prototype.generateMinorXGridValues = function (scale, majorGridVal
     return minorTickValues;
 };
 
-ChartInternal.prototype.updateYGrid = function () {
-    var $$ = this, config = $$.config,
-        gridValues = $$.yAxis.tickValues() || $$.y.ticks(config.grid_y_ticks),
-        gridValuesMinor = $$.yAxis.tickValuesMinor();
-    var ygrid = $$.main.select('.' + CLASS.ygrids).selectAll('.' + CLASS.ygrid)
+ChartInternal.prototype.updateY = function (yAxis, y, gridYTicks, classes) {
+    var $$ = this, 
+        config = $$.config,
+        gridValues = yAxis.tickValues() || y.ticks(gridYTicks),
+        gridValuesMinor = yAxis.tickValuesMinor();
+    var ygrid = $$.main.select('.' + classes.ygrids).selectAll('.' + classes.ygrid)
         .data(gridValues);
     var ygridEnter = ygrid.enter().append('line')
         // TODO: x1, x2, y1, y2, opacity need to be set here maybe
-        .attr('class', CLASS.ygrid);
-    $$.ygrid = ygridEnter.merge(ygrid);
-    $$.ygrid
-        .attr("x1", config.axis_rotated ? $$.y : 0)
-        .attr("x2", config.axis_rotated ? $$.y : $$.width)
-        .attr("y1", config.axis_rotated ? 0 : $$.y)
-        .attr("y2", config.axis_rotated ? $$.height : $$.y);
+        .attr('class', classes.ygrid);
+    var mergedEnter = ygridEnter.merge(ygrid);
+    mergedEnter
+        .attr("x1", config.axis_rotated ? y : 0)
+        .attr("x2", config.axis_rotated ? y : $$.width)
+        .attr("y1", config.axis_rotated ? 0 : y)
+        .attr("y2", config.axis_rotated ? $$.height : y);
     ygrid.exit().remove();
-    $$.smoothLines($$.ygrid, 'grid');
+    $$.smoothLines(mergedEnter, 'grid');
 
-    var ygridMinor = $$.main.select('.' + CLASS.ygridsMinor).selectAll('.' + CLASS.ygridMinor)
+    var ygridMinor = $$.main.select('.' + classes.ygridsMinor).selectAll('.' + classes.ygridMinor)
         .data(gridValuesMinor);
     var ygridEnterMinor = ygridMinor.enter().append('line')
         // TODO: x1, x2, y1, y2, opacity need to be set here maybe
-        .attr('class', CLASS.ygridMinor);
-    $$.ygridMinor = ygridEnterMinor.merge(ygridMinor);
-    $$.ygridMinor
-        .attr("x1", config.axis_rotated ? $$.y : 0)
-        .attr("x2", config.axis_rotated ? $$.y : $$.width)
-        .attr("y1", config.axis_rotated ? 0 : $$.y)
-        .attr("y2", config.axis_rotated ? $$.height : $$.y);
+        .attr('class', classes.ygridMinor);
+    var minorEnterMerged = ygridEnterMinor.merge(ygridMinor);
+    minorEnterMerged
+        .attr("x1", config.axis_rotated ? y : 0)
+        .attr("x2", config.axis_rotated ? y : $$.width)
+        .attr("y1", config.axis_rotated ? 0 : y)
+        .attr("y2", config.axis_rotated ? $$.height : y);
     ygridMinor.exit().remove();
-    $$.smoothLines($$.ygridMinor, 'grid');
+    $$.smoothLines(minorEnterMerged, 'grid');
 };
 
 ChartInternal.prototype.gridTextAnchor = function (d) {
@@ -226,7 +233,21 @@ ChartInternal.prototype.updateGrid = function (duration) {
 
     // Y-Grid
     if (config.grid_y_show) {
-        $$.updateYGrid();
+        $$.updateY($$.yAxis, $$.y, config.grid_y_ticks, {
+            ygrid: CLASS.ygrid,
+            ygrids: CLASS.ygrids,
+            ygridsMinor: CLASS.ygridsMinor,
+            ygridMinor: CLASS.ygridMinor
+        });
+    }
+    // Y2-Grid
+    if (config.grid_y2_show) {
+        $$.updateY($$.y2Axis, $$.y2, config.grid_y2_ticks, {
+            ygrid: CLASS.y2grid,
+            ygrids: CLASS.y2grids,
+            ygridsMinor: CLASS.y2gridsMinor,
+            ygridMinor: CLASS.y2gridMinor
+        });
     }
     ygridLine = main.select('.' + CLASS.ygridLines).selectAll('.' + CLASS.ygridLine)
         .data(config.grid_y_lines);

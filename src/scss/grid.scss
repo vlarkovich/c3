@@ -7,10 +7,10 @@
 .c3-grid text {
   fill: #aaa;
 }
-.c3-xgrid, .c3-ygrid {
+.c3-xgrid, .c3-ygrid, .c3-y2grid {
   stroke-dasharray: 3 3;
 }
-.c3-xgrid-minor, .c3-ygrid-minor {
+.c3-xgrid-minor, .c3-ygrid-minor, .c3-y2grid-minor {
   stroke-dasharray: 2 2;
 }
 .c3-xgrid-focus {

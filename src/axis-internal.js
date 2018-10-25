@@ -211,12 +211,12 @@ AxisInternal.prototype.updateTickLength = function () {
 AxisInternal.prototype.lineY2 = function (d) {
     var internal = this,
         tickPosition = internal.scale(d) + (internal.tickCentered ? 0 : internal.tickOffset);
-    return internal.range[0] < tickPosition && tickPosition < internal.range[1] ? internal.innerTickSize : 0;
+    return internal.range[0] < tickPosition && tickPosition < internal.range[1] ? internal.innerTickSize * internal.params.majorTickFactor : 0;
 };
 AxisInternal.prototype.minorLineY2 = function (d) {
     var internal = this,
         tickPosition = internal.scale(d) + (internal.tickCentered ? 0 : internal.tickOffset);
-    return internal.range[0] < tickPosition && tickPosition < internal.range[1] ? internal.minorInnerTickSize : 0;
+    return internal.range[0] < tickPosition && tickPosition < internal.range[1] ? internal.minorInnerTickSize * internal.params.minorTickFactor : 0;
 };
 AxisInternal.prototype.textY = function (){
     var internal = this, rotate = internal.tickTextRotate;
@@ -348,11 +348,11 @@ AxisInternal.prototype.generateAxis = function () {
             case "left":
                 {
                     tickTransform = internal.axisY;
-                    lineUpdate.attr("x2", -internal.innerTickSize)
+                    lineUpdate.attr("x2", -internal.innerTickSize * params.majorTickFactor)
                         .attr("y1", tickY)
                         .attr("y2", tickY)
                         .style("opacity", params.tickMajorShow ? 1 : 0);
-                    minorLineUpdate.attr("x2", -internal.minorInnerTickSize)
+                    minorLineUpdate.attr("x2", -internal.minorInnerTickSize * params.minorTickFactor)
                         .attr("y1", tickY)
                         .attr("y2", tickY);
                     textUpdate.attr("x", -internal.tickLength)
@@ -366,11 +366,11 @@ AxisInternal.prototype.generateAxis = function () {
             case "right":
                 {
                     tickTransform = internal.axisY;
-                    lineUpdate.attr("x2", internal.innerTickSize)
+                    lineUpdate.attr("x2", internal.innerTickSize * params.majorTickFactor)
                         .attr("y1", tickY)
                         .attr("y2", tickY)
                         .style("opacity", params.tickMajorShow ? 1 : 0);
-                    minorLineUpdate.attr("x2", internal.minorInnerTickSize)
+                    minorLineUpdate.attr("x2", internal.minorInnerTickSize * params.minorTickFactor)
                         .attr("y1", tickY)
                         .attr("y2", tickY);
                     textUpdate.attr("x", internal.tickLength)
