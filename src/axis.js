@@ -54,12 +54,16 @@ Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValue
         config = $$.config,
         axisParams = {
             isCategory: $$.isCategorized(),
+            isTimeSeries: $$.isTimeSeries(),
             withOuterTick: withOuterTick,
             tickMultiline: config.axis_x_tick_multiline,
             tickMultilineMax: config.axis_x_tick_multiline ? Number(config.axis_x_tick_multilineMax) : 0,
             tickWidth: config.axis_x_tick_width,
             tickTextRotate: withoutRotateTickText ? 0 : config.axis_x_tick_rotate,
             withoutTransition: withoutTransition,
+            tickMinorShow: config.axis_x_tick_minor_show,
+            tickMajorShow: config.axis_x_tick_major_show,
+            majorTickTextShow: config.axis_x_tick_major_text
         },
         axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient);
 
@@ -95,13 +99,16 @@ Axis.prototype.updateXAxisTickValues = function updateXAxisTickValues(targets, a
     }
     return tickValues;
 };
-Axis.prototype.getYAxis = function getYAxis(scale, orient, tickFormat, tickValues, withOuterTick, withoutTransition, withoutRotateTickText) {
+Axis.prototype.getYAxis = function getYAxis(scale, orient, tickFormat, tickValues, withOuterTick, withoutTransition, withoutRotateTickText, isY2) {
     var $$ = this.owner,
         config = $$.config,
         axisParams = {
             withOuterTick: withOuterTick,
             withoutTransition: withoutTransition,
-            tickTextRotate: withoutRotateTickText ? 0 : config.axis_y_tick_rotate
+            tickTextRotate: withoutRotateTickText ? 0 : config.axis_y_tick_rotate,
+            tickMinorShow: isY2 ? config.axis_y2_tick_minor_show : config.axis_y_tick_minor_show,
+            tickMajorShow: isY2 ? config.axis_y2_tick_major_show : config.axis_y_tick_major_show,
+            majorTickTextShow: isY2 ? config.axis_y2_tick_major_text : config.axis_y_tick_major_text
         },
         axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient).tickFormat(tickFormat);
     if ($$.isTimeSeriesY()) {
@@ -309,10 +316,10 @@ Axis.prototype.getMaxTickWidth = function getMaxTickWidth(id, withoutRecompute) 
         targetsToShow = $$.filterTargetsToShow($$.data.targets);
         if (id === 'y') {
             scale = $$.y.copy().domain($$.getYDomain(targetsToShow, 'y'));
-            axis = this.getYAxis(scale, $$.yOrient, config.axis_y_tick_format, $$.yAxisTickValues, false, true, true);
+            axis = this.getYAxis(scale, $$.yOrient, config.axis_y_tick_format, $$.yAxisTickValues, false, true, true, false);
         } else if (id === 'y2') {
             scale = $$.y2.copy().domain($$.getYDomain(targetsToShow, 'y2'));
-            axis = this.getYAxis(scale, $$.y2Orient, config.axis_y2_tick_format, $$.y2AxisTickValues, false, true, true);
+            axis = this.getYAxis(scale, $$.y2Orient, config.axis_y2_tick_format, $$.y2AxisTickValues, false, true, true, true);
         } else {
             scale = $$.x.copy().domain($$.getXDomain(targetsToShow));
             axis = this.getXAxis(scale, $$.xOrient, $$.xAxisTickFormat, $$.xAxisTickValues, false, true, true);

@@ -14,97 +14,167 @@
     <script src="../js/c3.js"></script>
     <script>
 
-      var smallData = [['sample', 30, 200, 100, 400, 150, 250]],
+      var smallData = [
+        ["x", 1.1, 1.5, 18, 1.8, 19, 7, 1.11, 15.1, 1.81, 1.81, 1.91, 70, 11, 51, 81, 81, 91, 100],
+        //["x", "2013-01-01", "2013-02-02", "2013-03-03", "2013-04-04", "2013-05-05", "2013-06-06", "2013-07-01", "2013-08-02", "2013-09-03", "2013-10-04", "2013-11-05", "2013-12-06", "2013-01-02", "2013-02-03", "2013-03-04", "2013-04-05", "2013-05-06", "2013-06-07"],
+        ['sample', 23, 20.5, 21, 20, 22, 23, 21.5, 20.5, 20.5, 22.5, 20.5, 23.5, 20.5, 20.5, 20.5, 20.5, 22.5, 23.5]
+      ],
           bigData = [['sample', 30, 200, 100, 400, 150, 250, 30, 200, 100, 400, 150, 250]];
 
       var chart1 = c3.generate({
         bindto: '#chart1',
         data: {
-          columns: smallData
-        },
-        grid: {
-          x: {
-            show: true
-          },
-        }
-      });
-
-      c3.generate({
-        bindto: '#chart2',
-        data: {
-          columns: smallData
-        },
-        grid: {
-          y: {
-            show: true
+          columns: smallData,
+          xs: {
+            sample: "x"
           }
-        }
-      });
-
-      c3.generate({
-        bindto: '#chart3',
-        data: {
-          columns: smallData
-        },
-        axis: {
-          rotated: true,
-        },
-        grid: {
-          x: {
-            show: true
-          },
-        }
-      });
-
-      c3.generate({
-        bindto: '#chart4',
-        data: {
-          columns: smallData
-        },
-        axis: {
-          rotated: true,
-        },
-        grid: {
-          y: {
-            show: true
-          }
-        }
-      });
-
-      c3.generate({
-        bindto: '#chart5',
-        data: {
-          columns: bigData
-        },
-        grid: {
-          x: {
-            show: true
-          },
-          y: {
-            show: true
-          }
-        }
-      });
-
-      c3.generate({
-        bindto: '#chart6',
-        data: {
-          columns: bigData
         },
         axis: {
           x: {
-            type: 'category'
+            type: "indexed",
+            tick: {
+              fit: false,
+              culling: false,
+              centered: true,
+              minor: {
+                show: false,
+                units: undefined
+              },
+              major: {
+                show: true,
+                units: 5,
+                text: false
+              }
+            },
+            show: true
+          },
+          y: {
+            show: true,
+            tick: {
+              minor: {
+                show: false,
+                units: undefined
+              },
+              major: {
+                units: 0.2,
+                show: true,
+                text: false
+              }
+            }
+          },
+          y2: {
+            show: true,
+            tick: {
+              minor: {
+                show: false,
+                units: undefined
+              },
+              major: {
+                units: 0.2,
+                show: true,
+                text: false
+              }
+            }
           }
         },
         grid: {
           x: {
-            show: true
+            show: true,
+            minor: {
+              show: true
+            },
+            major: {
+              show: true
+            }
           },
           y: {
-            show: true
+            show: true,
+            minor: {
+              show: false
+            },
+            major: {
+              show: true
+            }
           }
         }
       });
+
+      // c3.generate({
+      //   bindto: '#chart2',
+      //   data: {
+      //     columns: smallData
+      //   },
+      //   grid: {
+      //     y: {
+      //       show: true
+      //     }
+      //   }
+      // });
+
+      // c3.generate({
+      //   bindto: '#chart3',
+      //   data: {
+      //     columns: smallData
+      //   },
+      //   axis: {
+      //     rotated: true,
+      //   },
+      //   grid: {
+      //     x: {
+      //       show: true
+      //     },
+      //   }
+      // });
+
+      // c3.generate({
+      //   bindto: '#chart4',
+      //   data: {
+      //     columns: smallData
+      //   },
+      //   axis: {
+      //     rotated: true,
+      //   },
+      //   grid: {
+      //     y: {
+      //       show: true
+      //     }
+      //   }
+      // });
+
+      // c3.generate({
+      //   bindto: '#chart5',
+      //   data: {
+      //     columns: bigData
+      //   },
+      //   grid: {
+      //     x: {
+      //       show: true
+      //     },
+      //     y: {
+      //       show: true
+      //     }
+      //   }
+      // });
+
+      // c3.generate({
+      //   bindto: '#chart6',
+      //   data: {
+      //     columns: bigData
+      //   },
+      //   axis: {
+      //     x: {
+      //       type: 'category'
+      //     }
+      //   },
+      //   grid: {
+      //     x: {
+      //       show: true
+      //     },
+      //     y: {
+      //       show: true
+      //     }
+      //   }
+      // });
 
     </script>
   </body>

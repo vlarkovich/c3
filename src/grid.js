@@ -7,11 +7,17 @@ ChartInternal.prototype.initGrid = function () {
     $$.grid = $$.main.append('g')
         .attr("clip-path", $$.clipPathForGrid)
         .attr('class', CLASS.grid);
-    if (config.grid_x_show) {
+    if (config.grid_x_show && config.grid_x_major_show) {
         $$.grid.append("g").attr("class", CLASS.xgrids);
     }
-    if (config.grid_y_show) {
+    if (config.grid_x_minor_show) {
+        $$.grid.append("g").attr("class", CLASS.xgridsMinor);
+    }
+    if (config.grid_y_show && config.grid_y_major_show) {
         $$.grid.append('g').attr('class', CLASS.ygrids);
+    }
+    if (config.grid_y_minor_show) {
+        $$.grid.append('g').attr('class', CLASS.ygridsMinor);
     }
     if (config.grid_focus_show) {
         $$.grid.append('g')
@@ -34,7 +40,8 @@ ChartInternal.prototype.initGridLines = function () {
 ChartInternal.prototype.updateXGrid = function (withoutUpdate) {
     var $$ = this, config = $$.config, d3 = $$.d3,
         xgridData = $$.generateGridData(config.grid_x_type, $$.x),
-        tickOffset = $$.isCategorized() ? $$.xAxis.tickOffset() : 0;
+        xgridDataMinor = $$.generateMinorXGridValues($$.x, xgridData),
+        tickOffset = $$.isCategorized() && !$$.xAxis.tickCentered() ? $$.xAxis.tickOffset() : 0;
 
     $$.xgridAttr = config.axis_rotated ? {
         'x1': 0,
@@ -47,6 +54,7 @@ ChartInternal.prototype.updateXGrid = function (withoutUpdate) {
         'y1': 0,
         'y2': $$.height
     };
+    
     $$.xgridAttr.opacity = function () {
         var pos = +d3.select(this).attr(config.axis_rotated ? 'y1' : 'x1');
         return pos === (config.axis_rotated ? $$.height : 0) ? 0 : 1;
@@ -71,11 +79,70 @@ ChartInternal.prototype.updateXGrid = function (withoutUpdate) {
             .style("opacity", $$.xgridAttr.opacity);
     }
     xgrid.exit().remove();
+
+    var xgridMinor = $$.main.select('.' + CLASS.xgridsMinor).selectAll('.' + CLASS.xgridMinor)
+        .data(xgridDataMinor);
+    var xgridEnterMinor = xgridMinor.enter().append('line')
+        .attr("class", CLASS.xgridMinor)
+        .attr('x1', $$.xgridAttr.x1)
+        .attr('x2', $$.xgridAttr.x2)
+        .attr('y1', $$.xgridAttr.y1)
+        .attr('y2', $$.xgridAttr.y2)
+        .style("opacity", 0);
+    $$.xgridMinor = xgridEnterMinor.merge(xgridMinor);
+    if (!withoutUpdate) {
+        $$.xgridMinor
+            .attr('x1', $$.xgridAttr.x1)
+            .attr('x2', $$.xgridAttr.x2)
+            .attr('y1', $$.xgridAttr.y1)
+            .attr('y2', $$.xgridAttr.y2)
+            .style("opacity", $$.xgridAttr.opacity);
+    }
+    xgridMinor.exit().remove();
+};
+
+ChartInternal.prototype.generateMinorXGridValues = function (scale, majorGridValues) {
+    var $$ = this,
+        isTimeSeries = $$.isTimeSeries(),
+        minorTickValues = [],
+        domain = scale.domain(),
+        onlyOneItem = majorGridValues.length === 1,
+        step = onlyOneItem ? majorGridValues[0] - domain[0] : majorGridValues[1] - majorGridValues[0],
+        current, prev;
+
+    for (let i = 0; i < majorGridValues.length; i++) {
+        if (i === 0) {
+            if (onlyOneItem) {
+                minorTickValues.push(step / 2);
+            } else if (majorGridValues[i] - step / 2 > domain[0]) {
+                minorTickValues.push(majorGridValues[i] - step / 2);
+            }
+        } else if (i === majorGridValues.length - 1) {
+            current = isTimeSeries ? majorGridValues[i].getTime() : majorGridValues[i];
+            prev = isTimeSeries ? majorGridValues[i - 1].getTime() : majorGridValues[i - 1];
+
+            minorTickValues.push((prev + current) / 2);
+
+            if (onlyOneItem) {
+                minorTickValues.push((current + domain[domain.length - 1]) / 2);
+            } else if (current + step / 2 < domain[domain.length - 1]) {
+                minorTickValues.push(current + step / 2);
+            }
+        } else {
+            current = isTimeSeries ? majorGridValues[i].getTime() : majorGridValues[i];
+            prev = isTimeSeries ? majorGridValues[i - 1].getTime() : majorGridValues[i - 1];
+
+            minorTickValues.push((prev + current) / 2);
+        }
+    }
+
+    return minorTickValues;
 };
 
 ChartInternal.prototype.updateYGrid = function () {
     var $$ = this, config = $$.config,
-        gridValues = $$.yAxis.tickValues() || $$.y.ticks(config.grid_y_ticks);
+        gridValues = $$.yAxis.tickValues() || $$.y.ticks(config.grid_y_ticks),
+        gridValuesMinor = $$.yAxis.tickValuesMinor();
     var ygrid = $$.main.select('.' + CLASS.ygrids).selectAll('.' + CLASS.ygrid)
         .data(gridValues);
     var ygridEnter = ygrid.enter().append('line')
@@ -89,6 +156,20 @@ ChartInternal.prototype.updateYGrid = function () {
         .attr("y2", config.axis_rotated ? $$.height : $$.y);
     ygrid.exit().remove();
     $$.smoothLines($$.ygrid, 'grid');
+
+    var ygridMinor = $$.main.select('.' + CLASS.ygridsMinor).selectAll('.' + CLASS.ygridMinor)
+        .data(gridValuesMinor);
+    var ygridEnterMinor = ygridMinor.enter().append('line')
+        // TODO: x1, x2, y1, y2, opacity need to be set here maybe
+        .attr('class', CLASS.ygridMinor);
+    $$.ygridMinor = ygridEnterMinor.merge(ygridMinor);
+    $$.ygridMinor
+        .attr("x1", config.axis_rotated ? $$.y : 0)
+        .attr("x2", config.axis_rotated ? $$.y : $$.width)
+        .attr("y1", config.axis_rotated ? 0 : $$.y)
+        .attr("y2", config.axis_rotated ? $$.height : $$.y);
+    ygridMinor.exit().remove();
+    $$.smoothLines($$.ygridMinor, 'grid');
 };
 
 ChartInternal.prototype.gridTextAnchor = function (d) {
@@ -242,8 +323,9 @@ ChartInternal.prototype.generateGridData = function (type, scale) {
             gridData.push(new Date(i + '-01-01 00:00:00'));
         }
     } else {
-        gridData = scale.ticks(10);
-        if (gridData.length > tickNum) { // use only int
+        gridData = $$.isCategorized() ? $$.xAxis.tickValues() || scale.ticks(10) : scale.ticks(10);        
+        
+        if (gridData.length > tickNum && tickNum > 0) { // use only int
             gridData = gridData.filter(function (d) { return ("" + d).indexOf('.') < 0; });
         }
     }
