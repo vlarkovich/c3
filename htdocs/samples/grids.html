@@ -31,19 +31,21 @@
         },
         axis: {
           x: {
-            type: "indexed",
+            type: "category",
             tick: {
-              fit: false,
+              fit: true,
               culling: false,
               centered: true,
               minor: {
                 show: false,
-                units: undefined
+                units: undefined,
+                factor: 1
               },
               major: {
                 show: true,
                 units: 5,
-                text: false
+                text: true,
+                factor: 1
               }
             },
             show: true
@@ -52,13 +54,15 @@
             show: true,
             tick: {
               minor: {
-                show: false,
-                units: undefined
+                show: true,
+                units: undefined,
+                factor: 1
               },
               major: {
                 units: 0.2,
                 show: true,
-                text: false
+                text: true,
+                factor: 1
               }
             }
           },
@@ -66,15 +70,18 @@
             show: true,
             tick: {
               minor: {
-                show: false,
-                units: undefined
+                show: true,
+                units: undefined,
+                factor: 1
               },
               major: {
                 units: 0.2,
                 show: true,
-                text: false
+                text: true,
+                factor: 1
               }
-            }
+            },
+            default: [0, 100]
           }
         },
         grid: {
@@ -90,9 +97,15 @@
           y: {
             show: true,
             minor: {
-              show: false
+              show: true
             },
             major: {
+              show: true
+            }
+          },
+          y2: {
+            show: true,
+            minor: {
               show: true
             }
           }

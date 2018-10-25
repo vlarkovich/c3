@@ -63,7 +63,9 @@ Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValue
             withoutTransition: withoutTransition,
             tickMinorShow: config.axis_x_tick_minor_show,
             tickMajorShow: config.axis_x_tick_major_show,
-            majorTickTextShow: config.axis_x_tick_major_text
+            majorTickTextShow: config.axis_x_tick_major_text,
+            majorTickFactor: config.axis_x_tick_major_factor || 1,
+            minorTickFactor: config.axis_x_tick_minor_factor || 1
         },
         axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient);
 
@@ -108,7 +110,9 @@ Axis.prototype.getYAxis = function getYAxis(scale, orient, tickFormat, tickValue
             tickTextRotate: withoutRotateTickText ? 0 : config.axis_y_tick_rotate,
             tickMinorShow: isY2 ? config.axis_y2_tick_minor_show : config.axis_y_tick_minor_show,
             tickMajorShow: isY2 ? config.axis_y2_tick_major_show : config.axis_y_tick_major_show,
-            majorTickTextShow: isY2 ? config.axis_y2_tick_major_text : config.axis_y_tick_major_text
+            majorTickTextShow: isY2 ? config.axis_y2_tick_major_text : config.axis_y_tick_major_text,
+            majorTickFactor: (isY2 ? config.axis_y2_tick_major_factor : config.axis_y_tick_major_factor) || 1,
+            minorTickFactor: (isY2 ? config.axis_y2_tick_minor_factor : config.axis_y_tick_minor_factor) || 1
         },
         axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient).tickFormat(tickFormat);
     if ($$.isTimeSeriesY()) {
