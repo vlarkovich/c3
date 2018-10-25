@@ -172,10 +172,14 @@ ChartInternal.prototype.getDefaultConfig = function () {
         grid_y_show: false,
         grid_y_major_show: true,
         grid_y_minor_show: false,
+        grid_y2_show: false,
+        grid_y2_major_show: true,
+        grid_y2_minor_show: false,
         // not used
         // grid_y_type: 'tick',
         grid_y_lines: [],
         grid_y_ticks: 10,
+        grid_y2_ticks: 10,
         grid_focus_show: true,
         grid_lines_front: true,
         // point - point of each data
