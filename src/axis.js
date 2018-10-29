@@ -66,8 +66,15 @@ Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValue
             majorTickTextShow: config.axis_x_tick_major_text,
             majorTickFactor: config.axis_x_tick_major_factor || 1,
             minorTickFactor: config.axis_x_tick_minor_factor || 1
-        },
-        axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient);
+        }, axis;
+
+    if(config.axis_x_tick_rotateAuto && !withoutRotateTickText && $$.xAxis && $$.subXAxis){
+        $$.tickTextRotate = axisParams.tickTextRotate;
+        this.calculateRotation("x", axisParams, scale, orient, tickValues, tickFormat);
+        $$.tickTextRotate = axisParams.tickTextRotate;
+    }
+
+    axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient);
 
     if ($$.isTimeSeries() && tickValues && typeof tickValues !== "function") {
         tickValues = tickValues.map(function (v) {
@@ -85,6 +92,63 @@ Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValue
     }
 
     return axis;
+};
+Axis.prototype.calculateRotation = function calculateRotation(id, axisParams, scale, orient, tickValues, tickFormat) {
+    var $$ = this.owner,
+        self = this,
+        config = $$.config,
+        targetsToShow, axis, dummy, svg;
+    targetsToShow = $$.filterTargetsToShow($$.data.targets);
+    if (id === 'y') {
+        scale = $$.y.copy().domain($$.getYDomain(targetsToShow, 'y'));
+        axis = this.getYAxis(scale, $$.yOrient, config.axis_y_tick_format, $$.yAxisTickValues, false, true, true, false);
+    } else if (id === 'y2') {
+        scale = $$.y2.copy().domain($$.getYDomain(targetsToShow, 'y2'));
+        axis = this.getYAxis(scale, $$.y2Orient, config.axis_y2_tick_format, $$.y2AxisTickValues, false, true, true, true);
+    } else {
+        axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient);
+        if ($$.isTimeSeries() && tickValues && typeof tickValues !== "function") {
+            tickValues = tickValues.map(function (v) {
+                return $$.parseDate(v);
+            });
+        }
+    
+        // Set tick
+        axis.tickFormat(tickFormat).tickValues(tickValues);
+        if ($$.isCategorized()) {
+            axis.tickCentered(config.axis_x_tick_centered);
+            if (isEmpty(config.axis_x_tick_culling)) {
+                config.axis_x_tick_culling = false;
+            }
+        }
+        this.updateXAxisTickValues(targetsToShow, axis);
+    }
+
+    var prevX2;
+    
+    dummy = $$.d3.select('body').append('div').classed('c3', true);
+    svg = dummy.append("svg").style('visibility', 'hidden').style('position', 'fixed').style('top', 0).style('left', 0),
+        svg.append('g').call(axis).each(function () {
+            var incorrect = $$.d3.select(this).selectAll('text').nodes().some(function (node) {
+                var box = node.getBoundingClientRect();
+                if (prevX2 > box.x) {
+                    return true;
+                }
+
+                prevX2 = box.x + box.width;
+                return false;
+            });
+
+            dummy.remove();
+            if(incorrect) {
+                axisParams.tickTextRotate -= 10;
+                if(axisParams.tickTextRotate > -90){
+                    self.calculateRotation(id, axisParams, scale, orient, tickValues, tickFormat);
+                }                
+            }
+        });
+
+    return;
 };
 Axis.prototype.updateXAxisTickValues = function updateXAxisTickValues(targets, axis) {
     var $$ = this.owner,

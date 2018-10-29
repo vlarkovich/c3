@@ -107,6 +107,7 @@ ChartInternal.prototype.getDefaultConfig = function () {
         axis_x_tick_fit: true,
         axis_x_tick_values: null,
         axis_x_tick_rotate: 0,
+        axis_x_tick_rotateAuto: false,
         axis_x_tick_outer: true,
         axis_x_tick_multiline: true,
         axis_x_tick_multilineMax: 0,

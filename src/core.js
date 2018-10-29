@@ -533,9 +533,9 @@ ChartInternal.prototype.redraw = function(options, transitions) {
     }
 
     // MEMO: needed for grids calculation
-    if ($$.isCategorized() && targetsToShow.length === 0) {
-        $$.x.domain([0, $$.axes.x.selectAll('.tick').size()]);
-    }
+    // if ($$.isCategorized() && targetsToShow.length === 0) {
+    //     $$.x.domain([0, $$.axes.x.selectAll('.tick').size()]);
+    // }
 
     if (targetsToShow.length) {
         $$.updateXDomain(targetsToShow, withUpdateXDomain, withUpdateOrgXDomain, withTrimXDomain);
