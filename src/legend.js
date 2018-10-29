@@ -395,6 +395,8 @@ ChartInternal.prototype.updateLegend = function (targetIds, options, transitions
     // Update size and scale
     $$.updateSizes();
     $$.updateScales();
+    $$.updateSizes();
+    $$.updateScales();
     $$.updateSvgSize();
     // Update g positions
     $$.transformAll(withTransitionForTransform, transitions);
