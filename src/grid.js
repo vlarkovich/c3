@@ -46,7 +46,7 @@ ChartInternal.prototype.initGridLines = function () {
 ChartInternal.prototype.updateXGrid = function (withoutUpdate) {
     var $$ = this, config = $$.config, d3 = $$.d3,
         xgridData = $$.generateGridData(config.grid_x_type, $$.x),
-        xgridDataMinor = $$.generateMinorXGridValues($$.x, xgridData),
+        xgridDataMinor = $$.xAxis.tickValuesMinor(),
         tickOffset = $$.isCategorized() && !$$.xAxis.tickCentered() ? $$.xAxis.tickOffset() : 0;
 
     $$.xgridAttr = config.axis_rotated ? {
@@ -107,48 +107,10 @@ ChartInternal.prototype.updateXGrid = function (withoutUpdate) {
     xgridMinor.exit().remove();
 };
 
-ChartInternal.prototype.generateMinorXGridValues = function (scale, majorGridValues) {
-    var $$ = this,
-        isTimeSeries = $$.isTimeSeries(),
-        minorTickValues = [],
-        domain = scale.domain(),
-        onlyOneItem = majorGridValues.length === 1,
-        step = onlyOneItem ? majorGridValues[0] - domain[0] : majorGridValues[1] - majorGridValues[0],
-        current, prev;
-
-    for (let i = 0; i < majorGridValues.length; i++) {
-        if (i === 0) {
-            if (onlyOneItem) {
-                minorTickValues.push(step / 2);
-            } else if (majorGridValues[i] - step / 2 > domain[0]) {
-                minorTickValues.push(majorGridValues[i] - step / 2);
-            }
-        } else if (i === majorGridValues.length - 1) {
-            current = isTimeSeries ? majorGridValues[i].getTime() : majorGridValues[i];
-            prev = isTimeSeries ? majorGridValues[i - 1].getTime() : majorGridValues[i - 1];
-
-            minorTickValues.push((prev + current) / 2);
-
-            if (onlyOneItem) {
-                minorTickValues.push((current + domain[domain.length - 1]) / 2);
-            } else if (current + step / 2 < domain[domain.length - 1]) {
-                minorTickValues.push(current + step / 2);
-            }
-        } else {
-            current = isTimeSeries ? majorGridValues[i].getTime() : majorGridValues[i];
-            prev = isTimeSeries ? majorGridValues[i - 1].getTime() : majorGridValues[i - 1];
-
-            minorTickValues.push((prev + current) / 2);
-        }
-    }
-
-    return minorTickValues;
-};
-
 ChartInternal.prototype.updateY = function (yAxis, y, gridYTicks, classes) {
     var $$ = this, 
         config = $$.config,
-        gridValues = yAxis.tickValues() || y.ticks(gridYTicks),
+        gridValues = yAxis.tickValuesMajor() || yAxis.tickValues() || y.ticks(gridYTicks),
         gridValuesMinor = yAxis.tickValuesMinor();
     var ygrid = $$.main.select('.' + classes.ygrids).selectAll('.' + classes.ygrid)
         .data(gridValues);
@@ -344,7 +306,7 @@ ChartInternal.prototype.generateGridData = function (type, scale) {
             gridData.push(new Date(i + '-01-01 00:00:00'));
         }
     } else {
-        gridData = $$.isCategorized() ? $$.xAxis.tickValues() || scale.ticks(10) : scale.ticks(10);        
+        gridData = $$.isCategorized() ? $$.xAxis.tickValues() || $$.xAxis.tickValuesMajor() : $$.xAxis.tickValuesMajor();        
         
         if (gridData.length > tickNum && tickNum > 0) { // use only int
             gridData = gridData.filter(function (d) { return ("" + d).indexOf('.') < 0; });
