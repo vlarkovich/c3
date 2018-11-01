@@ -12,7 +12,8 @@ function AxisInternal(component, params) {
     internal.outerTickSize = this.params.withOuterTick ? 6 : 0;
     internal.tickPadding = 3;
     internal.tickValues = null;
-    internal.minorTickValues = null;
+    internal.minorTickValues = [];
+    internal.majorTickValues = [];
     internal.tickFormat;
     internal.tickArguments;
 
@@ -41,52 +42,82 @@ AxisInternal.prototype.scaleExtent = function (domain) {
     return start < stop ? [ start, stop ] : [ stop, start ];
 };
 AxisInternal.prototype.generateTicks = function (scale) {
-    var internal = this;
-    var i, domain, ticks = [];
-    if (scale.ticks) {
-        return scale.ticks.apply(scale, internal.tickArguments);
-    }
-    domain = scale.domain();
-    for (i = Math.ceil(domain[0]); i < domain[1]; i++) {
-        ticks.push(i);
-    }
-    if (ticks.length > 0 && ticks[0] > 0) {
-        ticks.unshift(ticks[0] - (ticks[1] - ticks[0]));
-    }
+    var internal = this,
+        params = internal.params,
+        units = params.majorTickUnits,
+        isTimeSeries = params.isTimeSeries,
+        domain = scale.domain();
+    var i, ticks = [];
+    if (units && !params.isCategory) {      
+        if(isTimeSeries){
+            for (i = domain[0].getTime(); i < domain[1].getTime(); i += units) {
+                ticks.push(new Date(i));
+            }
+        } else {
+            for (i = domain[0]; i < domain[1]; i += units) {
+                ticks.push(i);
+            }
+        }
+    } else {
+        if (scale.ticks) {
+            return scale.ticks.apply(scale, internal.tickArguments);
+        }
+        for (i = Math.ceil(domain[0]); i < domain[1]; i++) {
+            ticks.push(i);
+        }
+        if (ticks.length > 0 && ticks[0] > 0) {
+            ticks.unshift(ticks[0] - (ticks[1] - ticks[0]));
+        }
+    }   
+    
     return ticks;
 };
 AxisInternal.prototype.generateMinorTicks = function (scale, majorTickValues) {
     var internal = this,
-        isTimeSeries = internal.params.isTimeSeries,
+        params = internal.params,
+        units = params.minorTickUnits,
+        isTimeSeries = params.isTimeSeries,
         minorTickValues = [],
         domain = scale.domain(),
         onlyOneItem = majorTickValues.length === 1,
         step = onlyOneItem ? majorTickValues[0] - domain[0] : majorTickValues[1] - majorTickValues[0],
-        current, prev;
+        current, prev, i;
 
-    for (let i = 0; i < majorTickValues.length; i++) {
-        if (i === 0) {
-            if (onlyOneItem) {
-                minorTickValues.push(step / 2);
-            } else if (majorTickValues[i] - step / 2 > domain[0]) {
-                minorTickValues.push(majorTickValues[i] - step / 2);
-            }
-        } else if (i === majorTickValues.length - 1) {
-            current = isTimeSeries ? majorTickValues[i].getTime() : majorTickValues[i];
-            prev = isTimeSeries ? majorTickValues[i - 1].getTime() : majorTickValues[i - 1];
-
-            minorTickValues.push((prev + current) / 2);
-
-            if (onlyOneItem) {
-                minorTickValues.push((current + domain[domain.length - 1]) / 2);
-            } else if (current + step / 2 < domain[domain.length - 1]) {
-                minorTickValues.push(current + step / 2);
+    if(units && !params.isCategory){
+        if(isTimeSeries){
+            for (i = domain[0].getTime(); i < domain[1].getTime(); i += units) {
+                minorTickValues.push(new Date(i));
             }
         } else {
-            current = isTimeSeries ? majorTickValues[i].getTime() : majorTickValues[i];
-            prev = isTimeSeries ? majorTickValues[i - 1].getTime() : majorTickValues[i - 1];
-
-            minorTickValues.push((prev + current) / 2);
+            for (i = domain[0]; i < domain[1]; i += units) {
+                minorTickValues.push(i);
+            }
+        }
+    } else {
+        for (i = 0; i < majorTickValues.length; i++) {
+            if (i === 0) {
+                if (onlyOneItem) {
+                    minorTickValues.push(step / 2);
+                } else if (majorTickValues[i] - step / 2 > domain[0]) {
+                    minorTickValues.push(majorTickValues[i] - step / 2);
+                }
+            } else if (i === majorTickValues.length - 1) {
+                current = isTimeSeries ? majorTickValues[i].getTime() : majorTickValues[i];
+                prev = isTimeSeries ? majorTickValues[i - 1].getTime() : majorTickValues[i - 1];
+    
+                minorTickValues.push((prev + current) / 2);
+    
+                if (onlyOneItem) {
+                    minorTickValues.push((current + domain[domain.length - 1]) / 2);
+                } else if (current + step / 2 < domain[domain.length - 1]) {
+                    minorTickValues.push(current + step / 2);
+                }
+            } else {
+                current = isTimeSeries ? majorTickValues[i].getTime() : majorTickValues[i];
+                prev = isTimeSeries ? majorTickValues[i - 1].getTime() : majorTickValues[i - 1];
+    
+                minorTickValues.push((prev + current) / 2);
+            }
         }
     }
 
@@ -268,6 +299,7 @@ AxisInternal.prototype.generateAxis = function () {
 
             var minorTickValues = internal.generateMinorTicks(scale1, ticksValues);            
 
+            internal.majorTickValues = ticksValues;
             internal.minorTickValues = minorTickValues;
 
             var minorTicks = g.selectAll(".tick-minor").data(minorTickValues, scale1),
@@ -436,7 +468,7 @@ AxisInternal.prototype.generateAxis = function () {
         }
         else {
             length = axis.g.select('path.domain').node().getTotalLength() - internal.outerTickSize * 2;
-            interval = length / axis.g.selectAll('line').size();
+            interval = length / axis.g.selectAll('.tick line').size();
         }
         return interval === Infinity ? 0 : interval;
     };
@@ -461,6 +493,9 @@ AxisInternal.prototype.generateAxis = function () {
             internal.tickValues = x;
         }
         return axis;
+    };
+    axis.tickValuesMajor = function () {
+        return internal.majorTickValues;
     };
     axis.tickValuesMinor = function () {
         return internal.minorTickValues;

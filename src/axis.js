@@ -65,7 +65,9 @@ Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValue
             tickMajorShow: config.axis_x_tick_major_show,
             majorTickTextShow: config.axis_x_tick_major_text,
             majorTickFactor: config.axis_x_tick_major_factor || 1,
-            minorTickFactor: config.axis_x_tick_minor_factor || 1
+            minorTickFactor: config.axis_x_tick_minor_factor || 1,
+            majorTickUnits: config.axis_x_tick_major_units || 0,
+            minorTickUnits: config.axis_x_tick_minor_units || 0
         }, axis;
 
     if(config.axis_x_tick_rotateAuto && !withoutRotateTickText && $$.xAxis && $$.subXAxis){
@@ -97,51 +99,43 @@ Axis.prototype.calculateRotation = function calculateRotation(id, axisParams, sc
     var $$ = this.owner,
         self = this,
         config = $$.config,
-        targetsToShow, axis, dummy, svg;
+        targetsToShow, axis, dummy, svg, prevX;
     targetsToShow = $$.filterTargetsToShow($$.data.targets);
-    if (id === 'y') {
-        scale = $$.y.copy().domain($$.getYDomain(targetsToShow, 'y'));
-        axis = this.getYAxis(scale, $$.yOrient, config.axis_y_tick_format, $$.yAxisTickValues, false, true, true, false);
-    } else if (id === 'y2') {
-        scale = $$.y2.copy().domain($$.getYDomain(targetsToShow, 'y2'));
-        axis = this.getYAxis(scale, $$.y2Orient, config.axis_y2_tick_format, $$.y2AxisTickValues, false, true, true, true);
-    } else {
-        axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient);
-        if ($$.isTimeSeries() && tickValues && typeof tickValues !== "function") {
-            tickValues = tickValues.map(function (v) {
-                return $$.parseDate(v);
-            });
-        }
-    
-        // Set tick
-        axis.tickFormat(tickFormat).tickValues(tickValues);
-        if ($$.isCategorized()) {
-            axis.tickCentered(config.axis_x_tick_centered);
-            if (isEmpty(config.axis_x_tick_culling)) {
-                config.axis_x_tick_culling = false;
-            }
-        }
-        this.updateXAxisTickValues(targetsToShow, axis);
+    axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient);
+
+    if ($$.isTimeSeries() && tickValues && typeof tickValues !== "function") {
+        tickValues = tickValues.map(function (v) {
+            return $$.parseDate(v);
+        });
     }
 
-    var prevX2;
-    
+    // Set tick
+    axis.tickFormat(tickFormat).tickValues(tickValues);
+    if ($$.isCategorized()) {
+        axis.tickCentered(config.axis_x_tick_centered);
+        if (isEmpty(config.axis_x_tick_culling)) {
+            config.axis_x_tick_culling = false;
+        }
+    }
+
+    this.updateXAxisTickValues(targetsToShow, axis);
+
     dummy = $$.d3.select('body').append('div').classed('c3', true);
     svg = dummy.append("svg").style('visibility', 'hidden').style('position', 'fixed').style('top', 0).style('left', 0),
         svg.append('g').call(axis).each(function () {
             var incorrect = $$.d3.select(this).selectAll('text').nodes().some(function (node) {
                 var box = node.getBoundingClientRect();
-                if (prevX2 > box.x) {
+                if (prevX + 2 > box.x) { // 2 is needed for some padding between ticks
                     return true;
                 }
 
-                prevX2 = box.x + box.width;
+                prevX = box.x + box.width;
                 return false;
             });
 
             dummy.remove();
             if(incorrect) {
-                axisParams.tickTextRotate -= 10;
+                axisParams.tickTextRotate -= 15;
                 if(axisParams.tickTextRotate > -90){
                     self.calculateRotation(id, axisParams, scale, orient, tickValues, tickFormat);
                 }                
@@ -176,7 +170,9 @@ Axis.prototype.getYAxis = function getYAxis(scale, orient, tickFormat, tickValue
             tickMajorShow: isY2 ? config.axis_y2_tick_major_show : config.axis_y_tick_major_show,
             majorTickTextShow: isY2 ? config.axis_y2_tick_major_text : config.axis_y_tick_major_text,
             majorTickFactor: (isY2 ? config.axis_y2_tick_major_factor : config.axis_y_tick_major_factor) || 1,
-            minorTickFactor: (isY2 ? config.axis_y2_tick_minor_factor : config.axis_y_tick_minor_factor) || 1
+            minorTickFactor: (isY2 ? config.axis_y2_tick_minor_factor : config.axis_y_tick_minor_factor) || 1,
+            majorTickUnits: (isY2 ? config.axis_y2_tick_major_units : config.axis_y_tick_major_units) || 0,
+            minorTickUnits: (isY2 ? config.axis_y2_tick_minor_units : config.axis_y_tick_minor_units) || 0
         },
         axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient).tickFormat(tickFormat);
     if ($$.isTimeSeriesY()) {
