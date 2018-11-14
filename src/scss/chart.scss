@@ -29,7 +29,12 @@
     stroke-width: 1;
 }
 
-.c3-chart-arc text {
-  fill: #fff;
+path.c3-chart-arc-line {
+  stroke: #000;
+  stroke-width: 1;
+}
+
+.c3-chart-arc-text {
+  fill: #000;
   font-size: 13px;
 }

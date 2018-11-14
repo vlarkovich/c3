@@ -215,6 +215,26 @@ ChartInternal.prototype.initWithData = function(data) {
         $$.addHiddenLegendIds(config.legend_hide === true ? $$.mapToIds($$.data.targets) : config.legend_hide);
     }
 
+    $$.arcLabelWidth = 0;
+    $$.arcLabelHeight = 0;
+
+    if (config.pie_label_show && $$.hasArcType()) {
+        let format = $$.getArcLabelFormat();
+        
+        for (let i = 0; i < $$.data.targets.length; i++) {
+            let label = format(null, null, $$.data.targets[i].id);
+            let rect = $$.getArcLabelTextRect(label);
+
+            if (rect.width > $$.arcLabelWidth) {
+                $$.arcLabelWidth = rect.width;
+            }
+
+            if (rect.height > $$.arcLabelHeight) {
+                $$.arcLabelHeight = rect.height;
+            }
+        }
+    }
+
     // Init sizes and scales
     $$.updateSizes();
     $$.updateScales();
@@ -446,11 +466,11 @@ ChartInternal.prototype.updateSizes = function() {
     }
 
     if (hasArc && $$.isLegendRight) {
-        $$.arcMarginX = Math.min($$.width - legendWidth - $$.radiusExpanded * 1.1, $$.width / 2);
-        $$.margin3.left = $$.arcMarginX + $$.radiusExpanded * 1.1;
+        $$.arcMarginX = Math.min($$.width - legendWidth - $$.radiusExpanded * 1.1  - $$.arcLabelWidth, $$.width / 2);
+        $$.margin3.left = $$.arcMarginX + $$.radiusExpanded * 1.1 + $$.arcLabelWidth;
     } else if (hasArc && $$.isLegendLeft) {
-        $$.arcMarginX = Math.max(legendWidth + $$.radiusExpanded * 1.1, $$.width / 2);
-        $$.margin3.left = Math.max($$.width / 2 - $$.radiusExpanded * 1.1 - legendWidth, 0);
+        $$.arcMarginX = Math.max(legendWidth + $$.radiusExpanded * 1.1 + $$.arcLabelWidth, $$.width / 2);
+        $$.margin3.left = Math.max($$.width / 2 - $$.radiusExpanded * 1.1 - legendWidth - $$.arcLabelWidth, 0);
     } else {
         $$.arcMarginX = $$.width / 2;
     }
