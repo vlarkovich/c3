@@ -220,9 +220,9 @@ ChartInternal.prototype.initWithData = function(data) {
 
     if (config.pie_label_show && $$.hasArcType()) {
         let format = $$.getArcLabelFormat();
-        
+
         for (let i = 0; i < $$.data.targets.length; i++) {
-            let label = format(null, null, $$.data.targets[i].id);
+            let label = format ? format(null, null, $$.data.targets[i].id) : i + '%';
             let rect = $$.getArcLabelTextRect(label);
 
             if (rect.width > $$.arcLabelWidth) {
