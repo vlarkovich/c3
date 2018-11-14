@@ -10,6 +10,8 @@ export default {
     chartArc: 'c3-chart-arc',
     chartArcs: 'c3-chart-arcs',
     chartArcsTitle: 'c3-chart-arcs-title',
+    chartArcText: 'c3-chart-arc-text',
+    chartArcLine: 'c3-chart-arc-line',
     chartArcsBackground: 'c3-chart-arcs-background',
     chartArcsGaugeUnit: 'c3-chart-arcs-gauge-unit',
     chartArcsGaugeMax: 'c3-chart-arcs-gauge-max',
