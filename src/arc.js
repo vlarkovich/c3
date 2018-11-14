@@ -128,7 +128,8 @@ var startAngle = Math.PI - 5 * Math.PI / 180;
 var endAngle = Math.PI + 5 * Math.PI / 180;
 
 ChartInternal.prototype.textAnchorForArcLabel = function (d) {
-    if(d.startAngle > startAngle && d.endAngle > endAngle) {
+    var updated = this.updateAngle(d);
+    if(updated && updated.startAngle > startAngle && updated.endAngle > endAngle) {
         return "end";
     }
 
@@ -164,8 +165,8 @@ ChartInternal.prototype.transformForArcLabel = function (d) {
 ChartInternal.prototype.pathForArcLine = function (d) {
     var $$ = this, config = $$.config,
         updated = $$.updateAngle(d), c, x, y, h, ratio, translate = "", hasGauge = $$.hasType('gauge');
-    var ratio = $$.getArcRatio(updated);
-    if (updated && !hasGauge && $$.meetsArcLabelThreshold(ratio)) {
+    var text = $$.textForArcLabel(d);
+    if (updated && !hasGauge && text) {
         c = this.svgArc.centroid(updated);
         x = isNaN(c[0]) ? 0 : c[0];
         y = isNaN(c[1]) ? 0 : c[1];
