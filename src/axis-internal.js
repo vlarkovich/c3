@@ -461,14 +461,15 @@ AxisInternal.prototype.generateAxis = function () {
     axis.tickOffset = function () {
         return internal.tickOffset;
     };
-    axis.tickInterval = function () {
+    axis.tickInterval = function (tickCount) {
         var interval, length;
         if (params.isCategory) {
             interval = internal.tickOffset * 2;
         }
         else {
             length = axis.g.select('path.domain').node().getTotalLength() - internal.outerTickSize * 2;
-            interval = length / axis.g.selectAll('.tick line').size();
+            var intervalDivisor = tickCount || axis.g.selectAll('.tick line').size();
+            interval = length / intervalDivisor;
         }
         return interval === Infinity ? 0 : interval;
     };
