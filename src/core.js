@@ -499,6 +499,30 @@ ChartInternal.prototype.redraw = function(options, transitions) {
     var transitionsToWait, waitForDraw, flow, transition;
     var targetsToShow = $$.filterTargetsToShow($$.data.targets),
         tickValues, i, intervalForCulling, xDomainForZoom;
+
+    if (targetsToShow.length > 0 && config.data_is100Percent) {
+        var targetsCount = targetsToShow.length;
+        for (var valueIndex = 0; valueIndex < targetsToShow[0].values.length; valueIndex++) {
+            var total = 0;
+            for (var targetIndex = 0; targetIndex < targetsCount; targetIndex++) {                
+                if (targetsToShow[targetIndex].values[valueIndex].originalValue === undefined){
+                    total += Math.abs(targetsToShow[targetIndex].values[valueIndex].value);
+                } else {
+                    total += Math.abs(targetsToShow[targetIndex].values[valueIndex].originalValue);
+                }
+            }
+            var ratio = total > 0 ? 1.0 / total : 0;
+            for (var targetIndex = 0; targetIndex < targetsCount; targetIndex++) {
+                if (targetsToShow[targetIndex].values[valueIndex].originalValue === undefined){
+                    targetsToShow[targetIndex].values[valueIndex].originalValue = targetsToShow[targetIndex].values[valueIndex].value;
+                    targetsToShow[targetIndex].values[valueIndex].value = Math.abs(targetsToShow[targetIndex].values[valueIndex].value) * ratio;
+                } else {
+                    targetsToShow[targetIndex].values[valueIndex].value = Math.abs(targetsToShow[targetIndex].values[valueIndex].originalValue) * ratio;
+                }
+            }
+        }
+    }
+
     var xv = $$.xv.bind($$),
         cx, cy;
 

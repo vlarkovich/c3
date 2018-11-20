@@ -70,6 +70,7 @@ ChartInternal.prototype.getDefaultConfig = function () {
         data_keys: undefined,
         // configuration for no plot-able data supplied.
         data_empty_label_text: "",
+        data_is100Percent: false,
         // subchart
         subchart_show: false,
         subchart_size_height: 60,
