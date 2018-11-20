@@ -126,7 +126,7 @@ ChartInternal.prototype.getTooltipContent = function (d, defaultTitleFormat, def
     }
 
     for (i = 0; i < d.length; i++) {
-        if (!(d[i] && (d[i].value || d[i].value === 0))) {
+        if ((config.data_is100Percent && !(d[i] && (d[i].originalValue || d[i].originalValue === 0))) || !(d[i] && (d[i].value || d[i].value === 0))) {
             continue;
         }
 
@@ -135,14 +135,14 @@ ChartInternal.prototype.getTooltipContent = function (d, defaultTitleFormat, def
             text = "<table class='" + $$.CLASS.tooltip + "'>" + (title || title === 0 ? "<tr><th colspan='2'>" + title + "</th></tr>" : "");
         }
 
-        value = sanitise(valueFormat(d[i].value, d[i].ratio, d[i].id, d[i].index, d));
+        value = config.data_is100Percent ? sanitise(valueFormat(d[i].originalValue, d[i].ratio, d[i].id, d[i].index, d)) : sanitise(valueFormat(d[i].value, d[i].ratio, d[i].id, d[i].index, d));
         if (value !== undefined) {
             // Skip elements when their name is set to null
             if (d[i].name === null) {
                 continue;
             }
             name = sanitise(nameFormat(d[i].name, d[i].ratio, d[i].id, d[i].index));
-            bgcolor = $$.levelColor ? $$.levelColor(d[i].value) : color(d[i].id);
+            bgcolor = $$.levelColor ? $$.levelColor(config.data_is100Percent ? d[i].originalValue : d[i].value) : color(d[i].id);
 
             text += "<tr class='" + $$.CLASS.tooltipName + "-" + $$.getTargetSelectorSuffix(d[i].id) + "'>";
             text += "<td class='name'><span style='background-color:" + bgcolor + "'></span>" + name + "</td>";
