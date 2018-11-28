@@ -300,18 +300,15 @@ ChartInternal.prototype.generateGetAreaPoints = function (areaIndices, isSub) { 
         ];
     };
 };
-
-
 ChartInternal.prototype.updateCircle = function (cx, cy) {
-    var $$ = this;
+    var $$ = this,
+        r = $$.pointR.bind($$),
+        mainCircleEnter;
     var mainCircle = $$.main.selectAll('.' + CLASS.circles).selectAll('.' + CLASS.circle)
         .data($$.lineOrScatterData.bind($$));
-    var mainCircleEnter = mainCircle.enter().append("circle")
-        .attr("class", $$.classCircle.bind($$))
-        .attr("cx", cx)
-        .attr("cy", cy)
-        .attr("r", $$.pointR.bind($$))
-        .style("fill", $$.color);
+
+    mainCircleEnter = $$.drawMarker(cx, cy, mainCircle.enter(), r);
+
     $$.mainCircle = mainCircleEnter.merge(mainCircle)
         .style("opacity", $$.initialOpacityForCircle.bind($$));
     mainCircle.exit()
@@ -319,17 +316,166 @@ ChartInternal.prototype.updateCircle = function (cx, cy) {
 };
 ChartInternal.prototype.redrawCircle = function (cx, cy, withTransition, transition) {
     var $$ = this,
-        selectedCircles = $$.main.selectAll('.' + CLASS.selectedCircle);
-    return [
-        (withTransition ? $$.mainCircle.transition(transition) : $$.mainCircle)
-            .style('opacity', this.opacityForCircle.bind($$))
-            .style("fill", $$.color)
-            .attr("cx", cx)
-            .attr("cy", cy),
-        (withTransition ? selectedCircles.transition(transition) : selectedCircles)
-            .attr("cx", cx)
-            .attr("cy", cy)
-    ];
+        selectedMarkers = (withTransition ? $$.main.selectAll('.' + CLASS.selectedCircle).transition(transition) : $$.main.selectAll('.' + CLASS.selectedCircle)),
+        mainMarkers = (withTransition ? $$.mainCircle.transition(transition) : $$.mainCircle).style('opacity', this.opacityForCircle.bind($$)),
+        resultArray = [$$.redrawMarker(cx, cy, mainMarkers), $$.redrawMarker(cx, cy, selectedMarkers)];
+
+    return resultArray;
+};
+ChartInternal.prototype.drawMarker = function (cx, cy, selection, r) {
+    var $$ = this;
+    var symbol = $$.d3.symbol();
+    return selection.append("path")
+        .attr("class", $$.classCircle.bind($$))
+        .attr("d", function (d, i) { return symbol.type($$.getMarkerType(d.id)).size($$.getMarkerSize(d.id, r(d, i)))(); })
+        .attr("transform", function (d, i) { return "translate(" + cx(d, i) + "," + cy(d, i) + ")"; })
+        .style("fill", $$.color)
+        .style("stroke", $$.color);
+};
+ChartInternal.prototype.redrawMarker = function (cx, cy, mainCircle) {
+    return mainCircle.attr("transform", function (d, i) { return "translate(" + cx(d, i) + "," + cy(d, i) + ")"; });
+};
+ChartInternal.prototype.expandMarker = function (selection, r) {
+    var $$ = this;
+    var symbol = $$.d3.symbol();
+    return selection.attr("d", function (d, i) { return symbol.type($$.getMarkerType(d.id)).size($$.getMarkerSize(d.id, r(d, i)))(); });
+};
+ChartInternal.prototype.getMarkerType = function (id, isLineType) {
+    var $$ = this,
+    config = $$.config,
+    markerType;
+    switch (config.data_markers[id]) {
+        case "circle":
+            markerType = $$._getCircle();
+            break;
+        case "square":
+            markerType = $$.d3.symbolSquare;
+            break;
+        case "diamond":
+            markerType = {
+                draw: function (context, size) {
+                    var w = Math.sqrt(size) / 2;
+                    context.moveTo(0, -w);
+                    context.lineTo(w, 0);
+                    context.lineTo(0, w);
+                    context.lineTo(-w, 0);
+                    context.closePath();
+                }
+            };
+            break;
+        case "triangle-up":
+            markerType = {
+                draw: function (context, size) {
+                    var r = Math.sqrt(size) / 2;
+                    context.moveTo(0, -r);
+                    context.lineTo(r, r);
+                    context.lineTo(-r, r);
+                    context.closePath();
+                }
+            };
+            break;
+        case "triangle-down":
+            markerType = {
+                draw: function (context, size) {
+                    var r = Math.sqrt(size) / 2;
+                    context.moveTo(-r, -r);
+                    context.lineTo(r, -r);
+                    context.lineTo(0, r);
+                    context.closePath();
+                }
+            };
+            break;
+        case "cross":
+            var x = $$._getXRotationFunction(0.785398163);
+            var y = $$._getYRotationFunction(0.785398163);
+            markerType = {
+                draw: function(context, size) {
+                    var r = Math.sqrt(size) / 2;
+                    context.moveTo(x(-r, -0.1 * r), y(-r, -0.1 * r));
+                    context.lineTo(x(-0.1 * r, -0.1 * r), y(-0.1 * r, -0.1 * r));
+                    context.lineTo(x(-0.1 * r, -r), y(-0.1 * r, -r));
+                    context.lineTo(x(0.1 * r, -r), y(0.1 * r, -r));
+                    context.lineTo(x(0.1 * r, -0.1 * r), y(0.1 * r, -0.1 * r));
+                    context.lineTo(x(r, -0.1 * r), y(r, -0.1 * r));
+                    context.lineTo(x(r, 0.1 * r), y(r, 0.1 * r));
+                    context.lineTo(x(0.1 * r, 0.1 * r), y(0.1 * r, 0.1 * r));
+                    context.lineTo(x(0.1 * r, r), y(0.1 * r, r));
+                    context.lineTo(x(-0.1 * r, r), y(-0.1 * r, r));
+                    context.lineTo(x(-0.1 * r, 0.1 * r), y(-0.1 * r, 0.1 * r));
+                    context.lineTo(x(-r, 0.1 * r), y(-r, 0.1 * r));
+                    context.closePath();
+                  }
+            };
+            break;
+        default:
+            markerType = isLineType === false ? $$.d3.symbolSquare : $$._getCircle();
+            break;
+    }
+
+    return markerType;
+};
+ChartInternal.prototype.getMarkerSize = function (id, r) {
+    var $$ = this,
+        config = $$.config,
+        rPow2 = Math.pow(r, 2);
+    switch (config.data_markers[id]) {
+        case "circle":
+            return rPow2 * 0.8;
+        case "square":
+            return rPow2;
+        case "diamond":
+            return rPow2 * 1.5;
+        case "triangle-up":
+            return rPow2;
+        case "triangle-down":
+            return rPow2;
+        case "cross":
+            return rPow2 * 1.5;
+        default:
+            return rPow2 * 0.8;
+    }
+};
+ChartInternal.prototype._getCircle = function () {
+    return {
+        draw: function (context, size) {
+            var r = Math.sqrt(size) / 2;
+            context.moveTo(r, 0);
+            context.arc(0, 0, r, 0, 2 * Math.PI);
+        }
+    };
+};
+ChartInternal.prototype._getXRotationFunction = function (alpha) {
+    var cos = Math.cos(alpha);
+    var sin = Math.sin(alpha);
+
+    return function (x, y) {
+        return x * cos - y * sin;
+    };
+};
+ChartInternal.prototype._getYRotationFunction = function (alpha) {
+    var cos = Math.cos(alpha);
+    var sin = Math.sin(alpha);
+
+    return function (x, y) {
+        return y * cos + x * sin;
+    };
+};
+ChartInternal.prototype.expandCircles = function (i, id, reset) {
+    var $$ = this,
+        r = $$.pointExpandedR.bind($$);
+    if (reset) { $$.unexpandCircles(); }
+    var selection = $$.getCircles(i, id).classed(CLASS.EXPANDED, true);
+
+    $$.expandMarker(selection, r);
+};
+ChartInternal.prototype.unexpandCircles = function (i) {
+    var $$ = this,
+        r = $$.pointR.bind($$);
+    var selection = $$.getCircles(i)
+        .filter(function () { return $$.d3.select(this).classed(CLASS.EXPANDED); })
+        .classed(CLASS.EXPANDED, false);
+
+    $$.expandMarker(selection, r);
 };
 ChartInternal.prototype.circleX = function (d) {
     return d.x || d.x === 0 ? this.x(d.x) : null;
@@ -351,22 +497,6 @@ ChartInternal.prototype.updateCircleY = function () {
 ChartInternal.prototype.getCircles = function (i, id) {
     var $$ = this;
     return (id ? $$.main.selectAll('.' + CLASS.circles + $$.getTargetSelectorSuffix(id)) : $$.main).selectAll('.' + CLASS.circle + (isValue(i) ? '-' + i : ''));
-};
-ChartInternal.prototype.expandCircles = function (i, id, reset) {
-    var $$ = this,
-        r = $$.pointExpandedR.bind($$);
-    if (reset) { $$.unexpandCircles(); }
-    $$.getCircles(i, id)
-        .classed(CLASS.EXPANDED, true)
-        .attr('r', r);
-};
-ChartInternal.prototype.unexpandCircles = function (i) {
-    var $$ = this,
-        r = $$.pointR.bind($$);
-    $$.getCircles(i)
-        .filter(function () { return $$.d3.select(this).classed(CLASS.EXPANDED); })
-        .classed(CLASS.EXPANDED, false)
-        .attr('r', r);
 };
 ChartInternal.prototype.pointR = function (d) {
     var $$ = this, config = $$.config;
