@@ -12,12 +12,19 @@
           user-select: none;
 }
 
-.c3-legend-item-tile,
 .c3-xgrid-focus,
 .c3-ygrid,
 .c3-event-rect,
 .c3-bars path {
   shape-rendering: crispEdges;
+}
+
+.c3-legend-item-tile {
+  shape-rendering: auto;
+}
+
+.c3-legend-item-tile-line {
+  stroke-width: 2;
 }
 
 .c3-chart-arc path {

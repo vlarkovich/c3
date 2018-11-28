@@ -80,6 +80,7 @@ export default {
     legendItem: 'c3-legend-item',
     legendItemEvent: 'c3-legend-item-event',
     legendItemTile: 'c3-legend-item-tile',
+    legendItemTileLine: 'c3-legend-item-tile-line',
     legendItemHidden: 'c3-legend-item-hidden',
     legendItemFocused: 'c3-legend-item-focused',
     legendTitle: 'c3-legend-title',
