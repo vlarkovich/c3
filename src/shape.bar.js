@@ -55,8 +55,11 @@ ChartInternal.prototype.getBarW = function (axis, barTargetsNum) {
     var $$ = this, config = $$.config, maxUniqueXValues;
     if ($$.data.targets.length > 0) {
         maxUniqueXValues = $$.data.targets.reduce(function returnMaxLength(maxLength, target) {
-            var targetLength = target.values.length;
-            return Math.max(maxLength, targetLength);
+            if ($$.isBarType(target)) {
+                var targetLength = target.values.length;
+                return Math.max(maxLength, targetLength);
+            }
+            return maxLength;
         }, 0);
     }
     var w = typeof config.bar_width === 'number' ? config.bar_width : barTargetsNum ? (axis.tickInterval(maxUniqueXValues) * config.bar_width_ratio) / barTargetsNum : 0;

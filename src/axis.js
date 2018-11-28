@@ -70,7 +70,7 @@ Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValue
             minorTickUnits: config.axis_x_tick_minor_units || 0
         }, axis;
 
-    if(config.axis_x_tick_rotateAuto && !withoutRotateTickText && $$.xAxis && $$.subXAxis){
+    if(config.axis_rotated === false && config.axis_x_tick_rotateAuto && !withoutRotateTickText && $$.xAxis && $$.subXAxis){
         $$.tickTextRotate = axisParams.tickTextRotate;
         this.calculateRotation("x", axisParams, scale, orient, tickValues, tickFormat);
         $$.tickTextRotate = axisParams.tickTextRotate;
