@@ -156,28 +156,27 @@ ChartInternal.prototype.tooltipPosition = function (dataToShow, tWidth, tHeight,
     var $$ = this,
         config = $$.config,
         d3 = $$.d3;
-    var svgLeft, tooltipLeft, tooltipTop, chartRight;
+    var tooltipLeft, tooltipTop, chartRight, tooltipMargin = 5;
     var forArc = $$.hasArcType(),
         mouse = d3.mouse(element);
     // Determin tooltip position
     if (forArc) {
-        tooltipLeft = $$.arcMarginX + mouse[0];
-        tooltipTop = $$.margin.top + ($$.hasType('gauge') ? $$.arcHeight : $$.arcHeight / 2) + mouse[1] - tHeight;
+        tooltipLeft = $$.arcMarginX + mouse[0] + tooltipMargin;
+        tooltipTop = $$.margin.top + ($$.hasType('gauge') ? $$.arcHeight : $$.arcHeight / 2) + mouse[1] - tHeight - tooltipMargin;
     } else {
-        svgLeft = $$.getSvgLeft(true);
         if (config.axis_rotated) {
-            tooltipLeft = svgLeft + $$.getCurrentPaddingLeft(true) + mouse[0];
+            tooltipLeft = $$.getCurrentPaddingLeft(true) + mouse[0] + tooltipMargin;
             chartRight = $$.currentWidth - $$.getCurrentPaddingRight();
-            tooltipTop = $$.margin.top + $$.x(dataToShow[0].x) - tHeight;
+            tooltipTop = $$.margin.top + $$.x(dataToShow[0].x) - tHeight - tooltipMargin;
         } else {
-            tooltipLeft = svgLeft + $$.getCurrentPaddingLeft(true) + $$.x(dataToShow[0].x);
-            chartRight = svgLeft + $$.currentWidth - $$.getCurrentPaddingRight();
-            tooltipTop = $$.margin.top + mouse[1] - tHeight;
+            tooltipLeft = $$.getCurrentPaddingLeft(true) + $$.x(dataToShow[0].x) + tooltipMargin;
+            chartRight = $$.currentWidth - $$.getCurrentPaddingRight();
+            tooltipTop = $$.margin.top + mouse[1] - tHeight - tooltipMargin;
         }
 
         if (tooltipLeft + tWidth > chartRight) {
             // 20 is needed for Firefox to keep tooltip width
-            tooltipLeft -= tooltipLeft + tWidth - chartRight + 20;
+            tooltipLeft -= tooltipLeft + tWidth - chartRight + 20 + tooltipMargin;
         }
         if (tooltipTop + tHeight > $$.currentHeight) {
             tooltipTop -= tHeight;
