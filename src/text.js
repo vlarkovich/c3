@@ -38,7 +38,7 @@ ChartInternal.prototype.updateText = function (xForText, yForText, durationForEx
         .style("fill", function (d) { return $$.color(d); })
         .style("fill-opacity", 0);
     $$.mainText = mainTextEnter.merge(mainText)
-        .text(function (d, i, j) { return $$.dataLabelFormat(d.id)(d.value, d.id, i, j); });
+        .text(function (d, i, j) { return $$.dataLabelFormat(d.id)(config.data_is100Percent ? d.originalValue : d.value, d.id, i, j); });
     mainText.exit()
         .transition().duration(durationForExit)
         .style('fill-opacity', 0)
