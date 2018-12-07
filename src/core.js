@@ -537,17 +537,42 @@ ChartInternal.prototype.redraw = function(options, transitions) {
     if (targetsToShow.length > 0 && config.data_is100Percent) {
         var targetsCount = targetsToShow.length;
         for (var valueIndex = 0; valueIndex < targetsToShow[0].values.length; valueIndex++) {
-            var total = 0;
-            for (var targetIndex = 0; targetIndex < targetsCount; targetIndex++) {                
-                if (targetsToShow[targetIndex].values[valueIndex].originalValue === undefined){
-                    total += Math.abs(targetsToShow[targetIndex].values[valueIndex].value);
-                } else {
-                    total += Math.abs(targetsToShow[targetIndex].values[valueIndex].originalValue);
-                }
-            }
-            var ratio = total > 0 ? 1.0 / total : 0;
             for (var targetIndex = 0; targetIndex < targetsCount; targetIndex++) {
-                if (targetsToShow[targetIndex].values[valueIndex].originalValue === undefined){
+                var inGroup = false;
+                var total = 0;
+
+                for (var groupIndex = 0; groupIndex < config.data_groups.length; groupIndex++) {
+                    if (config.data_groups[groupIndex].indexOf(targetsToShow[targetIndex].id) >= 0) {
+                        inGroup = true;
+
+                        for (var j = 0; j < config.data_groups[groupIndex].length; j++) {
+                            var groupTarget = targetsToShow.find(function (t) {
+                                return t.id === config.data_groups[groupIndex][j];
+                            });
+                            
+                            if (groupTarget) {
+                                if (groupTarget.values[valueIndex].originalValue === undefined) {
+                                    total += Math.abs(groupTarget.values[valueIndex].value);
+                                } else {
+                                    total += Math.abs(groupTarget.values[valueIndex].originalValue);
+                                }
+                            }
+                        }
+
+                        break;
+                    }
+                }
+
+                if (inGroup === false) {
+                    if (targetsToShow[targetIndex].values[valueIndex].originalValue === undefined) {
+                        total += Math.abs(targetsToShow[targetIndex].values[valueIndex].value);
+                    } else {
+                        total += Math.abs(targetsToShow[targetIndex].values[valueIndex].originalValue);
+                    }
+                }
+
+                var ratio = total > 0 ? 1.0 / total : 0;
+                if (targetsToShow[targetIndex].values[valueIndex].originalValue === undefined) {
                     targetsToShow[targetIndex].values[valueIndex].originalValue = targetsToShow[targetIndex].values[valueIndex].value;
                     targetsToShow[targetIndex].values[valueIndex].value = Math.abs(targetsToShow[targetIndex].values[valueIndex].value) * ratio;
                 } else {
