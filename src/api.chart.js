@@ -46,5 +46,7 @@ Chart.prototype.destroy = function () {
         $$[key] = null;
     });
 
+    $$.destroyed = true;
+
     return null;
 };
