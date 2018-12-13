@@ -38,6 +38,9 @@ ChartInternal.prototype.load = function (targets, args) {
 };
 ChartInternal.prototype.loadFromArgs = function (args) {
     var $$ = this;
+    if(this.destroyed){
+        return;
+    }
     if (args.data) {
         $$.load($$.convertDataToTargets(args.data), args);
     }
