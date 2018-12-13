@@ -164,6 +164,7 @@ ChartInternal.prototype.transformForArcLabel = function (d) {
 
 ChartInternal.prototype.pathForArcLine = function (d) {
     var $$ = this, config = $$.config,
+        textPadding = 3,
         updated = $$.updateAngle(d), c, x, y, h, ratio, translate = "", hasGauge = $$.hasType('gauge');
     var text = $$.textForArcLabel(d);
     if (updated && !hasGauge && text) {
@@ -178,7 +179,12 @@ ChartInternal.prototype.pathForArcLine = function (d) {
         } else {
             ratio = $$.radius && h ? (36 / $$.radius > 0.375 ? 1.175 - 36 / $$.radius : 0.8) * $$.radius / h : 0;
         }
-        translate = "M0,0L" + (x * ratio) +  ',' + (y * ratio);
+        if($$.textAnchorForArcLabel(d) === "start"){
+            x = x * ratio - textPadding;
+        } else {
+            x = x * ratio + textPadding;
+        }
+        translate = "M0,0L" + x +  ',' + (y * ratio);
     }
     return translate;
 };
