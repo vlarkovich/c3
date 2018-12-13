@@ -20,7 +20,7 @@ import {
 } from './util';
 
 var c3 = {
-    version: "0.6.9",
+    version: "0.6.11",
     chart: {
         fn: Chart.prototype,
         internal: {
@@ -999,8 +999,6 @@ ChartInternal.prototype.updateSvgSize = function() {
     $$.svg.select('#' + $$.clipIdForSubchart).select('rect')
         .attr('width', $$.width)
         .attr('height', brush.size() ? brush.attr('height') : 0);
-    // MEMO: parent div's height will be bigger than svg when <!DOCTYPE html>
-    $$.selectChart.style('max-height', $$.currentHeight + "px");
 };
 
 ChartInternal.prototype.updateDimension = function(withoutAxis) {

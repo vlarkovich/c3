@@ -273,6 +273,7 @@ ChartInternal.prototype.getDefaultConfig = function () {
             left: 0
         },
         title_position: 'top-center',
+        footer_text: undefined
     };
 
     Object.keys(this.additionalConfig).forEach(function (key) {
