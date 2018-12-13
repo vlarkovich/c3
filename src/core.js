@@ -20,7 +20,7 @@ import {
 } from './util';
 
 var c3 = {
-    version: "0.6.7",
+    version: "0.6.11",
     chart: {
         fn: Chart.prototype,
         internal: {
@@ -360,8 +360,11 @@ ChartInternal.prototype.initWithData = function(data) {
         });
     }
 
-    // Bind resize event
+    // Bind to resize event
     $$.bindResize();
+
+    // Bind to window focus event
+    $$.bindWindowFocus();
 
     // export element of the chart
     $$.api.element = $$.selectChart.node();
@@ -947,8 +950,6 @@ ChartInternal.prototype.updateSvgSize = function() {
     $$.svg.select('#' + $$.clipIdForSubchart).select('rect')
         .attr('width', $$.width)
         .attr('height', brush.size() ? brush.attr('height') : 0);
-    // MEMO: parent div's height will be bigger than svg when <!DOCTYPE html>
-    $$.selectChart.style('max-height', $$.currentHeight + "px");
 };
 
 ChartInternal.prototype.updateDimension = function(withoutAxis) {
@@ -1010,6 +1011,9 @@ ChartInternal.prototype.observeInserted = function(selection) {
     });
 };
 
+/**
+ * Binds handlers to the window resize event.
+ */
 ChartInternal.prototype.bindResize = function() {
     var $$ = this,
         config = $$.config;
@@ -1078,6 +1082,28 @@ ChartInternal.prototype.bindResize = function() {
             wrapper();
         };
     }
+};
+
+/**
+ * Binds handlers to the window focus event.
+ */
+ChartInternal.prototype.bindWindowFocus = function() {
+    if (this.windowFocusHandler) {
+        // The handler is already set
+        return;
+    }
+
+    this.windowFocusHandler = () => { this.redraw(); };
+
+    window.addEventListener('focus', this.windowFocusHandler);
+};
+
+/**
+ * Unbinds from the window focus event.
+ */
+ChartInternal.prototype.unbindWindowFocus = function () {
+    window.removeEventListener('focus', this.windowFocusHandler);
+    delete this.windowFocusHandler;
 };
 
 ChartInternal.prototype.generateResize = function() {
@@ -1163,18 +1189,7 @@ ChartInternal.prototype.parseDate = function(date) {
 };
 
 ChartInternal.prototype.isTabVisible = function() {
-    var hidden;
-    if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support
-        hidden = "hidden";
-    } else if (typeof document.mozHidden !== "undefined") {
-        hidden = "mozHidden";
-    } else if (typeof document.msHidden !== "undefined") {
-        hidden = "msHidden";
-    } else if (typeof document.webkitHidden !== "undefined") {
-        hidden = "webkitHidden";
-    }
-
-    return document[hidden] ? false : true;
+    return !document.hidden;
 };
 
 ChartInternal.prototype.getPathBox = getPathBox;
