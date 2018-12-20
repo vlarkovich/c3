@@ -218,23 +218,6 @@ ChartInternal.prototype.initWithData = function(data) {
     $$.arcLabelWidth = 0;
     $$.arcLabelHeight = 0;
 
-    if (config.pie_label_show && $$.hasArcType()) {
-        let format = $$.getArcLabelFormat();
-
-        for (let i = 0; i < $$.data.targets.length; i++) {
-            let label = format ? format(null, null, $$.data.targets[i].id) : i + '%';
-            let rect = $$.getArcLabelTextRect(label);
-
-            if (rect.width > $$.arcLabelWidth) {
-                $$.arcLabelWidth = rect.width;
-            }
-
-            if (rect.height > $$.arcLabelHeight) {
-                $$.arcLabelHeight = rect.height;
-            }
-        }
-    }
-
     // Init sizes and scales
     $$.updateSizes();
     $$.updateScales();
@@ -466,6 +449,23 @@ ChartInternal.prototype.updateSizes = function() {
     }
     if ($$.updateRadius) {
         $$.updateRadius();
+    }
+
+    if (config.pie_label_show && $$.hasArcType()) {
+        let format = $$.getArcLabelFormat();
+
+        for (let i = 0; i < $$.data.targets.length; i++) {
+            let label = format ? format(null, null, $$.data.targets[i].id) : i + '%';
+            let rect = $$.getArcLabelTextRect(label);
+
+            if (rect.width > $$.arcLabelWidth) {
+                $$.arcLabelWidth = rect.width;
+            }
+
+            if (rect.height > $$.arcLabelHeight) {
+                $$.arcLabelHeight = rect.height;
+            }
+        }
     }
 
     if (hasArc && $$.isLegendRight) {

@@ -37,7 +37,7 @@ ChartInternal.prototype.updateRadius = function () {
     var $$ = this, config = $$.config,
         w = config.gauge_width || config.donut_width,
         gaugeArcWidth = $$.filterTargetsToShow($$.data.targets).length * $$.config.gauge_arcs_minWidth;
-    $$.radiusExpanded = Math.min($$.arcWidth - $$.arcLabelWidth * 2, $$.arcHeight) / 2 * ($$.hasType('gauge') ? 0.85 : 1);
+    $$.radiusExpanded = Math.min($$.arcWidth - $$.arcLabelWidth * 2, $$.arcHeight - $$.arcLabelHeight * 2) / 2 * ($$.hasType('gauge') ? 0.85 : 1);
     $$.radius = $$.radiusExpanded * 0.95;
     $$.innerRadiusRatio = w ? ($$.radius - w) / $$.radius : 0.6;
     $$.innerRadius = $$.hasType('donut') || $$.hasType('gauge') ? $$.radius * $$.innerRadiusRatio : 0;
@@ -124,12 +124,10 @@ ChartInternal.prototype.getArc = function (d, withoutUpdate, force) {
     return force || this.isArcType(d.data) ? this.svgArc(d, withoutUpdate) : "M 0 0";
 };
 
-var startAngle = Math.PI - 5 * Math.PI / 180;
-var endAngle = Math.PI + 5 * Math.PI / 180;
-
 ChartInternal.prototype.textAnchorForArcLabel = function (d) {
     var updated = this.updateAngle(d);
-    if(updated && updated.startAngle > startAngle && updated.endAngle > endAngle) {
+    
+    if(updated && (updated.startAngle + updated.endAngle) / 2 > Math.PI) {
         return "end";
     }
 
