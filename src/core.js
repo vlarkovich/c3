@@ -82,7 +82,9 @@ ChartInternal.prototype.initParams = function() {
     $$.clipPathForXAxis = $$.getClipPath($$.clipIdForXAxis);
     $$.clipPathForYAxis = $$.getClipPath($$.clipIdForYAxis);
     $$.clipPathForGrid = $$.getClipPath($$.clipIdForGrid);
-    $$.clipPathForSubchart = $$.getClipPath($$.clipIdForSubchart);
+    if($$.config.subchart_show){
+        $$.clipPathForSubchart = $$.getClipPath($$.clipIdForSubchart);    
+    }
 
     $$.dragStart = null;
     $$.dragging = false;
@@ -248,7 +250,9 @@ ChartInternal.prototype.initWithData = function(data) {
     $$.clipXAxis = $$.appendClip(defs, $$.clipIdForXAxis);
     $$.clipYAxis = $$.appendClip(defs, $$.clipIdForYAxis);
     $$.clipGrid = $$.appendClip(defs, $$.clipIdForGrid);
-    $$.clipSubchart = $$.appendClip(defs, $$.clipIdForSubchart);
+    if ($$.config.subchart_show) {
+        $$.clipSubchart = $$.appendClip(defs, $$.clipIdForSubchart);
+    }
     $$.updateSvgSize();
 
     // Define regions
@@ -260,7 +264,7 @@ ChartInternal.prototype.initWithData = function(data) {
     if ($$.initDragZoom) {
         $$.initDragZoom();
     }
-    if ($$.initSubchart) {
+    if ($$.config.subchart_show && $$.initSubchart) {
         $$.initSubchart();
     }
     if ($$.initTooltip) {
@@ -278,7 +282,7 @@ ChartInternal.prototype.initWithData = function(data) {
 
     // Update selection based on size and scale
     // TODO: currently this must be called after initLegend because of update of sizes, but it should be done in initSubchart.
-    if ($$.initSubchartBrush) {
+    if ($$.config.subchart_show && $$.initSubchartBrush) {
         $$.initSubchartBrush();
     }
 
@@ -469,7 +473,7 @@ ChartInternal.prototype.updateTargets = function(targets) {
 
     /*-- Sub --*/
 
-    if ($$.updateTargetsForSubchart) {
+    if ($$.config.subchart_show && $$.updateTargetsForSubchart) {
         $$.updateTargetsForSubchart(targets);
     }
 
@@ -655,7 +659,7 @@ ChartInternal.prototype.redraw = function(options, transitions) {
     }
 
     // subchart
-    if ($$.redrawSubchart) {
+    if (config.subchart_show && $$.redrawSubchart) {
         $$.redrawSubchart(withSubchart, transitions, duration, durationForExit, areaIndices, barIndices, lineIndices);
     }
 
@@ -901,6 +905,7 @@ ChartInternal.prototype.transformAll = function(withTransition, transitions) {
 
 ChartInternal.prototype.updateSvgSize = function() {
     var $$ = this,
+        config = $$.config,
         brush = $$.svg.select(".c3-brush .overlay");
     $$.svg.attr('width', $$.currentWidth).attr('height', $$.currentHeight);
     $$.svg.selectAll(['#' + $$.clipId, '#' + $$.clipIdForGrid]).select('rect')
@@ -916,9 +921,11 @@ ChartInternal.prototype.updateSvgSize = function() {
         .attr('y', $$.getYAxisClipY.bind($$))
         .attr('width', $$.getYAxisClipWidth.bind($$))
         .attr('height', $$.getYAxisClipHeight.bind($$));
-    $$.svg.select('#' + $$.clipIdForSubchart).select('rect')
-        .attr('width', $$.width)
-        .attr('height', brush.size() ? brush.attr('height') : 0);
+    if (config.subchart_show) {
+        $$.svg.select('#' + $$.clipIdForSubchart).select('rect')
+            .attr('width', $$.width)
+            .attr('height', brush.size() ? brush.attr('height') : 0);
+    }
 };
 
 ChartInternal.prototype.updateDimension = function(withoutAxis) {
