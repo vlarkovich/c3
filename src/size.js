@@ -89,7 +89,6 @@ ChartInternal.prototype.getSvgLeft = function (withoutRecompute) {
     return svgLeft > 0 ? svgLeft : 0;
 };
 
-
 ChartInternal.prototype.getAxisWidthByAxisId = function (id, withoutRecompute) {
     var $$ = this, position = $$.axis.getLabelPositionById(id);
     return $$.axis.getMaxTickWidth(id, withoutRecompute) + (position.isInner ? 20 : 40);
@@ -107,8 +106,8 @@ ChartInternal.prototype.getHorizontalAxisHeight = function (axisId) {
         h = 30 + $$.axis.getMaxTickWidth(axisId) * Math.cos(Math.PI * (90 - Math.abs(config.axis_x_tick_rotateAuto ? $$.tickTextRotate || config.axis_x_tick_rotate : config.axis_x_tick_rotate)) / 180);
     }
     // Calculate y axis height when tick rotated
-    if (axisId === 'y' && config.axis_rotated && config.axis_y_tick_rotate) {
-        h = 30 + $$.axis.getMaxTickWidth(axisId) * Math.cos(Math.PI * (90 - Math.abs(config.axis_y_tick_rotate)) / 180);
+    if (axisId === 'y' && config.axis_rotated && (config.axis_y_tick_rotate || config.axis_y_tick_rotateAuto)) {
+        h = 30 + $$.axis.getMaxTickWidth(axisId) * Math.cos(Math.PI * (90 - Math.abs(config.axis_y_tick_rotateAuto ? $$.tickTextRotate || config.axis_y_tick_rotate : config.axis_y_tick_rotate)) / 180);
     }
     return h + ($$.axis.getLabelPositionById(axisId).isInner ? 0 : 10) + (axisId === 'y2' ? -10 : 0);
 };

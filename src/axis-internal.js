@@ -80,7 +80,7 @@ AxisInternal.prototype.generateMinorTicks = function (scale, majorTickValues) {
         minorTickValues = [],
         domain = scale.domain(),
         onlyOneItem = majorTickValues.length === 1,
-        step = onlyOneItem ? majorTickValues[0] - domain[0] : majorTickValues[1] - majorTickValues[0],
+        step = (params.isCategory ? 1 : onlyOneItem ? majorTickValues[0] - domain[0] : majorTickValues[1] - majorTickValues[0]) / 2,
         current, prev, i;
 
     if(units && !params.isCategory){
@@ -96,10 +96,11 @@ AxisInternal.prototype.generateMinorTicks = function (scale, majorTickValues) {
     } else {
         for (i = 0; i < majorTickValues.length; i++) {
             if (i === 0) {
-                if (onlyOneItem) {
-                    minorTickValues.push(step / 2);
-                } else if (majorTickValues[i] - step / 2 > domain[0]) {
-                    minorTickValues.push(majorTickValues[i] - step / 2);
+                if (onlyOneItem && !params.isCategory) {
+                    minorTickValues.push(majorTickValues[i] - step);
+                    minorTickValues.push(majorTickValues[i] + step);
+                } else if (majorTickValues[i] - step > domain[0]) {
+                    minorTickValues.push(majorTickValues[i] - step);
                 }
             } else if (i === majorTickValues.length - 1) {
                 current = isTimeSeries ? majorTickValues[i].getTime() : majorTickValues[i];
@@ -107,10 +108,8 @@ AxisInternal.prototype.generateMinorTicks = function (scale, majorTickValues) {
     
                 minorTickValues.push((prev + current) / 2);
     
-                if (onlyOneItem) {
-                    minorTickValues.push((current + domain[domain.length - 1]) / 2);
-                } else if (current + step / 2 < domain[domain.length - 1]) {
-                    minorTickValues.push(current + step / 2);
+                if (current + step < domain[domain.length - 1]) {
+                    minorTickValues.push(current + step);
                 }
             } else {
                 current = isTimeSeries ? majorTickValues[i].getTime() : majorTickValues[i];
