@@ -1149,7 +1149,13 @@ ChartInternal.prototype.bindWindowFocus = function() {
         return;
     }
 
-    this.windowFocusHandler = () => { this.redraw(); };
+    this.windowFocusHandler = () => { this.updateAndRedraw({
+        withUpdateXDomain: false,
+        withUpdateOrgXDomain: false,
+        withTransition: false,
+        withTransitionForTransform: false,
+        withLegend: true
+      }); };
 
     window.addEventListener('focus', this.windowFocusHandler);
 };

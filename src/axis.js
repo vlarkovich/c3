@@ -49,7 +49,7 @@ Axis.prototype.init = function init() {
         .attr("transform", config.axis_rotated ? "" : "rotate(-90)")
         .style("text-anchor", this.textAnchorForY2AxisLabel.bind(this));
 };
-Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValues, withOuterTick, withoutTransition, withoutRotateTickText) {
+Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValues, withOuterTick, withoutTransition, canRotate) {
     var $$ = this.owner,
         config = $$.config,
         axisParams = {
@@ -59,7 +59,7 @@ Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValue
             tickMultiline: config.axis_x_tick_multiline,
             tickMultilineMax: config.axis_x_tick_multiline ? Number(config.axis_x_tick_multilineMax) : 0,
             tickWidth: config.axis_x_tick_width,
-            tickTextRotate: withoutRotateTickText ? 0 : config.axis_x_tick_rotate,
+            tickTextRotate: canRotate ? config.axis_x_tick_rotate : 0,
             withoutTransition: withoutTransition,
             tickMinorShow: config.axis_x_tick_minor_show,
             tickMajorShow: config.axis_x_tick_major_show,
@@ -70,9 +70,17 @@ Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValue
             minorTickUnits: config.axis_x_tick_minor_units || 0
         }, axis;
 
-    if(config.axis_rotated === false && config.axis_x_tick_rotateAuto && !withoutRotateTickText && $$.xAxis && $$.subXAxis){
+    if(config.axis_rotated === false && config.axis_x_tick_rotateAuto && canRotate) {
         $$.tickTextRotate = axisParams.tickTextRotate;
-        this.calculateRotation("x", axisParams, scale, orient, tickValues, tickFormat);
+        
+        let scaleCopy = scale.copy();
+        let scaleCopy1 = scale.copy();
+        let domain = scaleCopy1.domain();
+        scaleCopy1.domain([domain[0], domain[1] - 1]);
+        let range = scaleCopy.range();
+        scaleCopy.range([range[0], range[1] - (scaleCopy1(domain[1]) - scaleCopy(domain[1])) * 1.5]);
+
+        this.calculateRotation("x", axisParams, scaleCopy, orient, tickFormat);
         $$.tickTextRotate = axisParams.tickTextRotate;
     }
 
@@ -95,13 +103,14 @@ Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValue
 
     return axis;
 };
-Axis.prototype.calculateRotation = function calculateRotation(id, axisParams, scale, orient, tickValues, tickFormat) {
+Axis.prototype.calculateRotation = function calculateRotation(id, axisParams, scale, orient, tickFormat) {
     var $$ = this.owner,
         self = this,
         config = $$.config,
-        targetsToShow, axis, dummy, svg, prevX;
-    targetsToShow = $$.filterTargetsToShow($$.data.targets);
-    axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient);
+        targetsToShow = $$.filterTargetsToShow($$.data.targets),
+        tickValues = $$.xAxisTickValues,
+        axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient), 
+        dummy, svg, prevX;
 
     if ($$.isTimeSeries() && tickValues && typeof tickValues !== "function") {
         tickValues = tickValues.map(function (v) {
@@ -121,26 +130,26 @@ Axis.prototype.calculateRotation = function calculateRotation(id, axisParams, sc
     this.updateXAxisTickValues(targetsToShow, axis);
 
     dummy = $$.d3.select('body').append('div').classed('c3', true);
-    svg = dummy.append("svg").style('visibility', 'hidden').style('position', 'fixed').style('top', 0).style('left', 0),
-        svg.append('g').call(axis).each(function () {
-            var incorrect = $$.d3.select(this).selectAll('text').nodes().some(function (node) {
-                var box = node.getBoundingClientRect();
-                if (prevX + 2 > box.x) { // 2 is needed for some padding between ticks
-                    return true;
-                }
-
-                prevX = box.x + box.width;
-                return false;
-            });
-
-            dummy.remove();
-            if(incorrect) {
-                axisParams.tickTextRotate -= 15;
-                if(axisParams.tickTextRotate > -90){
-                    self.calculateRotation(id, axisParams, scale, orient, tickValues, tickFormat);
-                }                
+    svg = dummy.append("svg").style('visibility', 'hidden').style('position', 'fixed').style('top', 0).style('left', 0);
+    svg.append('g').call(axis).each(function () {
+        let incorrect = $$.d3.select(this).selectAll('text').nodes().some(function (node) {
+            let box = node.getBoundingClientRect();
+            if (prevX + 2 > box.x || (axis.tickValues() && axis.tickValues().length > 1 && box.x < 0)) {
+                return true;
             }
+
+            prevX = box.x + box.width;
+            return false;
         });
+
+        dummy.remove();
+        if (incorrect) {
+            axisParams.tickTextRotate -= 5;
+            if (axisParams.tickTextRotate > -90) {
+                self.calculateRotation(id, axisParams, scale, orient, tickFormat);
+            }
+        }
+    });
 
     return;
 };
@@ -159,13 +168,13 @@ Axis.prototype.updateXAxisTickValues = function updateXAxisTickValues(targets, a
     }
     return tickValues;
 };
-Axis.prototype.getYAxis = function getYAxis(scale, orient, tickFormat, tickValues, withOuterTick, withoutTransition, withoutRotateTickText, isY2) {
+Axis.prototype.getYAxis = function getYAxis(scale, orient, tickFormat, tickValues, withOuterTick, withoutTransition, canRotate, isY2) {
     var $$ = this.owner,
         config = $$.config,
         axisParams = {
             withOuterTick: withOuterTick,
             withoutTransition: withoutTransition,
-            tickTextRotate: withoutRotateTickText ? 0 : config.axis_y_tick_rotate,
+            tickTextRotate: canRotate ? config.axis_y_tick_rotate : 0,
             tickMinorShow: isY2 ? config.axis_y2_tick_minor_show : config.axis_y_tick_minor_show,
             tickMajorShow: isY2 ? config.axis_y2_tick_major_show : config.axis_y_tick_major_show,
             majorTickTextShow: isY2 ? config.axis_y2_tick_major_text : config.axis_y_tick_major_text,
@@ -173,14 +182,61 @@ Axis.prototype.getYAxis = function getYAxis(scale, orient, tickFormat, tickValue
             minorTickFactor: (isY2 ? config.axis_y2_tick_minor_factor : config.axis_y_tick_minor_factor) || 1,
             majorTickUnits: (isY2 ? config.axis_y2_tick_major_units : config.axis_y_tick_major_units) || 0,
             minorTickUnits: (isY2 ? config.axis_y2_tick_minor_units : config.axis_y_tick_minor_units) || 0
-        },
-        axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient).tickFormat(tickFormat);
+        }, axis;
+
+    if (config.axis_rotated && !isY2 && config.axis_y_tick_rotateAuto && canRotate) {
+        $$.tickTextRotate = axisParams.tickTextRotate;
+        this.calculateYRotation("y", axisParams, scale, orient, tickFormat);
+        $$.tickTextRotate = axisParams.tickTextRotate;
+    }
+
+    axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient).tickFormat(tickFormat);
+
     if ($$.isTimeSeriesY()) {
         axis.ticks(config.axis_y_tick_time_type, config.axis_y_tick_time_interval);
     } else {
         axis.tickValues(tickValues);
     }
+
     return axis;
+};
+Axis.prototype.calculateYRotation = function calculateRotation(id, axisParams, scale, orient, tickFormat) {
+    var $$ = this.owner,
+        self = this,
+        config = $$.config,
+        tickValues = $$.yAxisTickValues,
+        axis = new self.internal(self, axisParams).axis.scale(scale).orient(orient).tickFormat(tickFormat), 
+        dummy, svg, prevX;
+
+    if ($$.isTimeSeriesY()) {
+        axis.ticks(config.axis_y_tick_time_type, config.axis_y_tick_time_interval);
+    } else {
+        axis.tickValues(tickValues);
+    }
+
+    dummy = $$.d3.select('body').append('div').classed('c3', true);
+    svg = dummy.append("svg").style('visibility', 'hidden').style('position', 'fixed').style('top', 0).style('left', 0);
+    svg.append('g').call(axis).each(function () {
+        let incorrect = $$.d3.select(this).selectAll('text').nodes().some(function (node) {
+            let box = node.getBoundingClientRect();
+            if (prevX + 2 > box.x || (axis.tickValues() && axis.tickValues().length > 1 && box.x < 0)) {
+                return true;
+            }
+
+            prevX = box.x + box.width;
+            return false;
+        });
+
+        dummy.remove();
+        if (incorrect) {
+            axisParams.tickTextRotate -= 5;
+            if (axisParams.tickTextRotate > -90) {
+                self.calculateYRotation(id, axisParams, scale, orient, tickFormat);
+            }
+        }
+    });
+
+    return;
 };
 Axis.prototype.getId = function getId(id) {
     var config = this.owner.config;
@@ -335,14 +391,14 @@ Axis.prototype.dyForXAxisLabel = function dyForXAxisLabel() {
     if (config.axis_rotated) {
         return position.isInner ? "1.2em" : -25 - ($$.config.axis_x_inner ? 0 : this.getMaxTickWidth('x'));
     } else {
-        return position.isInner ? "-0.5em" : config.axis_x_height ? config.axis_x_height - 10 : "3em";
+        return position.isInner ? "-0.5em" : config.axis_x_height ? config.axis_x_height - 10 : $$.getHorizontalAxisHeight("x") - 10;
     }
 };
 Axis.prototype.dyForYAxisLabel = function dyForYAxisLabel() {
     var $$ = this.owner,
         position = this.getYAxisLabelPosition();
     if ($$.config.axis_rotated) {
-        return position.isInner ? "-0.5em" : "3em";
+        return position.isInner ? "-0.5em" : $$.getHorizontalAxisHeight("y") - 10;
     } else {
         return position.isInner ? "1.2em" : -10 - ($$.config.axis_y_inner ? 0 : (this.getMaxTickWidth('y') + 10));
     }
@@ -380,13 +436,13 @@ Axis.prototype.getMaxTickWidth = function getMaxTickWidth(id, withoutRecompute) 
         targetsToShow = $$.filterTargetsToShow($$.data.targets);
         if (id === 'y') {
             scale = $$.y.copy().domain($$.getYDomain(targetsToShow, 'y'));
-            axis = this.getYAxis(scale, $$.yOrient, config.axis_y_tick_format, $$.yAxisTickValues, false, true, true, false);
+            axis = this.getYAxis(scale, $$.yOrient, config.axis_y_tick_format, $$.yAxisTickValues, false, true, false, false);
         } else if (id === 'y2') {
             scale = $$.y2.copy().domain($$.getYDomain(targetsToShow, 'y2'));
-            axis = this.getYAxis(scale, $$.y2Orient, config.axis_y2_tick_format, $$.y2AxisTickValues, false, true, true, true);
+            axis = this.getYAxis(scale, $$.y2Orient, config.axis_y2_tick_format, $$.y2AxisTickValues, false, true, false, true);
         } else {
             scale = $$.x.copy().domain($$.getXDomain(targetsToShow));
-            axis = this.getXAxis(scale, $$.xOrient, $$.xAxisTickFormat, $$.xAxisTickValues, false, true, true);
+            axis = this.getXAxis(scale, $$.xOrient, $$.xAxisTickFormat, $$.xAxisTickValues, false, true);
             this.updateXAxisTickValues(targetsToShow, axis);
         }
         dummy = $$.d3.select('body').append('div').classed('c3', true);

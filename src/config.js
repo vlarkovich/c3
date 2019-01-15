@@ -143,6 +143,7 @@ ChartInternal.prototype.getDefaultConfig = function () {
         axis_y_tick_outer: true,
         axis_y_tick_values: null,
         axis_y_tick_rotate: 0,
+        axis_y_tick_rotateAuto: false,
         axis_y_tick_count: undefined,
         axis_y_tick_time_type: undefined,
         axis_y_tick_time_interval: undefined,
