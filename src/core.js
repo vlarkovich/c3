@@ -530,8 +530,12 @@ ChartInternal.prototype.redraw = function(options, transitions) {
     if (withLegend && config.legend_show) {
         $$.updateLegend($$.mapToIds($$.data.targets), options, transitions);
     } else if (withDimension) {
+        if (targetsToShow.length) {
+            $$.updateXDomain(targetsToShow, withUpdateXDomain, withUpdateOrgXDomain, withTrimXDomain);
+        }
         // need to update dimension (e.g. axis.y.tick.values) because y tick values should change
         // no need to update axis in it because they will be updated in redraw()
+        $$.updateDimension(true);
         $$.updateDimension(true);
     }
 
@@ -1062,13 +1066,7 @@ ChartInternal.prototype.bindWindowFocus = function() {
         return;
     }
 
-    this.windowFocusHandler = () => { this.updateAndRedraw({
-        withUpdateXDomain: false,
-        withUpdateOrgXDomain: false,
-        withTransition: false,
-        withTransitionForTransform: false,
-        withLegend: true
-      }); };
+    this.windowFocusHandler = () => { this.redraw(); };
 
     window.addEventListener('focus', this.windowFocusHandler);
 };
