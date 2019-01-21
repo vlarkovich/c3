@@ -78,7 +78,7 @@ Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValue
         let domain = scaleCopy1.domain();
         scaleCopy1.domain([domain[0], domain[1] - 1]);
         let range = scaleCopy.range();
-        scaleCopy.range([range[0], range[1] - (scaleCopy1(domain[1]) - scaleCopy(domain[1])) * 1.5]);
+        scaleCopy.range([range[0], range[1] - (scaleCopy1(domain[1]) - scaleCopy(domain[1])) * 2]);
 
         this.calculateRotation("x", axisParams, scaleCopy, orient, tickFormat);
         $$.tickTextRotate = axisParams.tickTextRotate;
@@ -134,20 +134,18 @@ Axis.prototype.calculateRotation = function calculateRotation(id, axisParams, sc
     svg.append('g').call(axis).each(function () {
         let incorrect = $$.d3.select(this).selectAll('text').nodes().some(function (node) {
             let box = node.getBoundingClientRect();
-            if (prevX + 2 > box.x || (axis.tickValues() && axis.tickValues().length > 1 && box.x < 0)) {
+            if (prevX + 2 > box.left || (axis.tickValues() && axis.tickValues().length > 1 && box.left < 0)) {
                 return true;
             }
 
-            prevX = box.x + box.width;
+            prevX = box.left + box.width;
             return false;
         });
 
         dummy.remove();
-        if (incorrect) {
+        if (incorrect && axisParams.tickTextRotate - 5 > -91) {
             axisParams.tickTextRotate -= 5;
-            if (axisParams.tickTextRotate > -90) {
-                self.calculateRotation(id, axisParams, scale, orient, tickFormat);
-            }
+            self.calculateRotation(id, axisParams, scale, orient, tickFormat);
         }
     });
 
@@ -219,20 +217,18 @@ Axis.prototype.calculateYRotation = function calculateRotation(id, axisParams, s
     svg.append('g').call(axis).each(function () {
         let incorrect = $$.d3.select(this).selectAll('text').nodes().some(function (node) {
             let box = node.getBoundingClientRect();
-            if (prevX + 2 > box.x || (axis.tickValues() && axis.tickValues().length > 1 && box.x < 0)) {
+            if (prevX + 2 > box.left || (axis.tickValues() && axis.tickValues().length > 1 && box.left < 0)) {
                 return true;
             }
 
-            prevX = box.x + box.width;
+            prevX = box.left + box.width;
             return false;
         });
 
         dummy.remove();
-        if (incorrect) {
+        if (incorrect && axisParams.tickTextRotate - 5 > -91) {
             axisParams.tickTextRotate -= 5;
-            if (axisParams.tickTextRotate > -90) {
-                self.calculateYRotation(id, axisParams, scale, orient, tickFormat);
-            }
+            self.calculateYRotation(id, axisParams, scale, orient, tickFormat);
         }
     });
 
