@@ -37,7 +37,11 @@ ChartInternal.prototype.updateRadius = function () {
     var $$ = this, config = $$.config,
         w = config.gauge_width || config.donut_width,
         gaugeArcWidth = $$.filterTargetsToShow($$.data.targets).length * $$.config.gauge_arcs_minWidth;
-    $$.radiusExpanded = Math.min($$.arcWidth - $$.arcLabelWidth * 2, $$.arcHeight - $$.arcLabelHeight * 2) / 2 * ($$.hasType('gauge') ? 0.85 : 1);
+
+    let labelWidth = $$.arcLabelWidth < config.pie_label_maxWidth ? $$.arcLabelWidth : config.pie_label_maxWidth;
+    let min = Math.min($$.arcWidth - labelWidth * 2, $$.arcHeight - $$.arcLabelHeight * 2 - 10);
+
+    $$.radiusExpanded = min < config.pie_minRadius * 2 ? config.pie_minRadius : min / 2;
     $$.radius = $$.radiusExpanded * 0.95;
     $$.innerRadiusRatio = w ? ($$.radius - w) / $$.radius : 0.6;
     $$.innerRadius = $$.hasType('donut') || $$.hasType('gauge') ? $$.radius * $$.innerRadiusRatio : 0;
@@ -161,28 +165,15 @@ ChartInternal.prototype.transformForArcLabel = function (d) {
 };
 
 ChartInternal.prototype.pathForArcLine = function (d) {
-    var $$ = this, config = $$.config,
-        textPadding = 3,
-        updated = $$.updateAngle(d), c, x, y, h, ratio, translate = "", hasGauge = $$.hasType('gauge');
-    var text = $$.textForArcLabel(d);
-    if (updated && !hasGauge && text) {
-        c = this.svgArc.centroid(updated);
-        x = isNaN(c[0]) ? 0 : c[0];
-        y = isNaN(c[1]) ? 0 : c[1];
-        h = Math.sqrt(x * x + y * y);
-        if ($$.hasType('donut') && config.donut_label_ratio) {
-            ratio = isFunction(config.donut_label_ratio) ? config.donut_label_ratio(d, $$.radius, h) : config.donut_label_ratio;
-        } else if ($$.hasType('pie') && config.pie_label_ratio) {
-            ratio = isFunction(config.pie_label_ratio) ? config.pie_label_ratio(d, $$.radius, h) : config.pie_label_ratio;
-        } else {
-            ratio = $$.radius && h ? (36 / $$.radius > 0.375 ? 1.175 - 36 / $$.radius : 0.8) * $$.radius / h : 0;
-        }
-        if($$.textAnchorForArcLabel(d) === "start"){
-            x = x * ratio - textPadding;
-        } else {
-            x = x * ratio + textPadding;
-        }
-        translate = "M0,0L" + x +  ',' + (y * ratio);
+    var $$ = this,
+        updated = $$.updateAngle(d), 
+        translate = "", 
+        hasGauge = $$.hasType('gauge');
+    
+    let textWithPosition = $$._getTextForArcLabelWithPosition(d);
+    if (updated && !hasGauge && textWithPosition.text) {
+        let position = textWithPosition.textPosition;
+        translate = "M0,0L" + position.x +  ',' + (position.y * position.ratio);
     }
     return translate;
 };
@@ -204,16 +195,96 @@ ChartInternal.prototype.convertToArcData = function (d) {
 };
 
 ChartInternal.prototype.textForArcLabel = function (d) {
+    var $$ = this;
+
+    return $$._getTextForArcLabelWithPosition(d).text;
+};
+
+ChartInternal.prototype._getTextForArcLabelWithPosition = function (d) {
     var $$ = this,
+        config = $$.config,
         updated, value, ratio, id, format;
-    if (! $$.shouldShowArcLabel()) { return ""; }
+    if (! $$.shouldShowArcLabel()) { return { text: "" }; }
+
     updated = $$.updateAngle(d);
     value = updated ? updated.value : null;
     ratio = $$.getArcRatio(updated);
     id = d.data.id;
-    if (! $$.hasType('gauge') && ! $$.meetsArcLabelThreshold(ratio)) { return ""; }
+
+    if (! $$.hasType('gauge') && ! $$.meetsArcLabelThreshold(ratio)) { return { text: "" }; }
+
     format = $$.getArcLabelFormat();
-    return format ? format(value, ratio, id) : $$.defaultArcValueFormat(value, ratio);
+    let text = format ? format(value, ratio, id) : $$.defaultArcValueFormat(value, ratio);
+    let textRect = $$.getArcLabelTextRect(text);
+    let textPosition = $$.isTextFitWithPosition(d, updated, textRect);
+
+    if(!textPosition){
+        if (textRect.width > config.pie_label_maxWidth){
+            text = text.substring(0, config.pie_label_minLetters) + "...";
+            textRect = $$.getArcLabelTextRect(text);
+
+            textPosition = $$.isTextFitWithPosition(d, updated, textRect);
+        }
+    }
+    
+    if(textPosition){
+        return { text, textPosition };
+    }
+
+    return { text: "" };
+};
+
+ChartInternal.prototype.isTextFitWithPosition = function (d, updated, textRect) {
+    var $$ = this;
+    let textPosition = $$.getTextPosition(d, updated);
+    let textPostionX;
+
+    if(textPosition.textAnchorStart) {
+        textPostionX = textPosition.x + textRect.width;
+    } else {
+        textPostionX = textPosition.x - textRect.width;
+    }    
+
+    if ($$.isLegendRight) {
+        if($$.arcMarginX + textPostionX > $$.arcWidth || $$.arcMarginX + textPostionX < 10) {
+            return false;
+        }
+    } else if ($$.isLegendLeft) {
+        if($$.arcMarginX + textPostionX > $$.width || $$.arcMarginX + textPostionX < $$.width - $$.arcWidth) {
+            return false;
+        }
+    } else if ($$.arcMarginX + textPostionX > $$.width || $$.arcMarginX + textPostionX < 10){
+        return false;
+    }
+
+    return textPosition;
+};
+
+ChartInternal.prototype.getTextPosition = function (d, updated) {
+    var $$ = this, 
+        config = $$.config,
+        textPadding = 3,
+        c, x, y, h, ratio;
+
+    c = this.svgArc.centroid(updated);
+    x = isNaN(c[0]) ? 0 : c[0];
+    y = isNaN(c[1]) ? 0 : c[1];
+    h = Math.sqrt(x * x + y * y);
+    if ($$.hasType('donut') && config.donut_label_ratio) {
+        ratio = isFunction(config.donut_label_ratio) ? config.donut_label_ratio(d, $$.radius, h) : config.donut_label_ratio;
+    } else if ($$.hasType('pie') && config.pie_label_ratio) {
+        ratio = isFunction(config.pie_label_ratio) ? config.pie_label_ratio(d, $$.radius, h) : config.pie_label_ratio;
+    } else {
+        ratio = $$.radius && h ? (36 / $$.radius > 0.375 ? 1.175 - 36 / $$.radius : 0.8) * $$.radius / h : 0;
+    }
+    let textAnchorStart = $$.textAnchorForArcLabel(d) === "start";
+    if (textAnchorStart) {
+        x = x * ratio - textPadding;
+    } else {
+        x = x * ratio + textPadding;
+    }
+
+    return { x, y, ratio, textAnchorStart };
 };
 
 ChartInternal.prototype.textForGaugeMinMax = function (value, isMax) {
@@ -521,7 +592,7 @@ ChartInternal.prototype.redrawArc = function (duration, durationForExit, withTra
         .attr("transform", $$.transformForArcLabel.bind($$))
         .style("text-anchor", $$.textAnchorForArcLabel.bind($$))
         .style('font-size', function (d) { return $$.isGaugeType(d.data) && $$.filterTargetsToShow($$.data.targets).length === 1 ? Math.round($$.radius / 5) + 'px' : ''; })
-      .transition().duration(duration)
+        .transition().duration(duration)
         .attr("class", CLASS.chartArcText)
         .style("opacity", function (d) { return $$.isTargetToShow(d.data.id) && $$.isArcType(d.data) ? 1 : 0; });
     main.select('.' + CLASS.chartArcsTitle)
