@@ -233,9 +233,9 @@ ChartInternal.prototype.updateLegend = function (targetIds, options, transitions
         if ($$.isLegendInset) {
             legendAreaLength = config.legend_inset_step ? config.legend_inset_step * maxHeight : $$.currentHeight - config.legend_inset_y;
         } else if ($$.isLegendHorizontal){
-            legendAreaLength = $$.isLegendLeft || $$.isLegendRight ? $$.currentWidth * ($$.hasArcType() ? 0.5 : 0.66) : $$.currentWidth;
+            legendAreaLength = $$.isLegendLeft || $$.isLegendRight ? $$.currentWidth * 0.66 : $$.currentWidth;
         } else {
-            legendAreaLength = ($$.isLegendLeft || $$.isLegendRight ? $$.currentHeight : $$.currentHeight * ($$.hasArcType() ? 0.5 : 0.66)) - $$.legendTitleHeight;
+            legendAreaLength = ($$.isLegendLeft || $$.isLegendRight ? $$.currentHeight : $$.currentHeight * 0.66) - $$.legendTitleHeight;
         }
 
         if (config.legend_equally) {
@@ -389,7 +389,7 @@ ChartInternal.prototype.updateLegend = function (targetIds, options, transitions
         .attr('y2', yForLegendTile);
 
     (withTransition ? tiles.transition() : tiles)
-        .attr("d", function (d) { return $$.d3.symbol().size($$.getMarkerSize(d, config.legend_item_tile_height / 2)).type($$.getMarkerType(d, $$.isLineType.bind($$)(d)))(); })
+        .attr("d", function (d) { return $$.d3.symbol().size($$.getMarkerSize(d, config.legend_item_tile_height / 2, true)).type($$.getMarkerType(d, $$.isLineType.bind($$)(d)))(); })
         .attr("transform", function (d, i) { return "translate(" + (x2ForLegendTile(d, i) + x1ForLegendTile(d, i)) / 2 + "," + yForLegendTile(d, i) + ")"; });
 
     if (!$$.isLegendInset && config.legend_title && maxWidth > 0) {

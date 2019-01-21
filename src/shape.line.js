@@ -342,8 +342,8 @@ ChartInternal.prototype.expandMarker = function (selection, r) {
 };
 ChartInternal.prototype.getMarkerType = function (id, isLineType) {
     var $$ = this,
-    config = $$.config,
-    markerType;
+        config = $$.config,
+        markerType;
     switch (config.data_markers[id]) {
         case "circle":
             markerType = $$._getCircle();
@@ -414,13 +414,14 @@ ChartInternal.prototype.getMarkerType = function (id, isLineType) {
 
     return markerType;
 };
-ChartInternal.prototype.getMarkerSize = function (id, r) {
+ChartInternal.prototype.getMarkerSize = function (id, r, reduced) {
     var $$ = this,
         config = $$.config,
         rPow2 = Math.pow(r, 2);
+
     switch (config.data_markers[id]) {
         case "circle":
-            return rPow2 * 0.8;
+            return rPow2 * (reduced ? 0.8 : 1.5);
         case "square":
             return rPow2;
         case "diamond":
@@ -432,7 +433,7 @@ ChartInternal.prototype.getMarkerSize = function (id, r) {
         case "cross":
             return rPow2 * 1.5;
         default:
-            return rPow2 * 0.8;
+            return rPow2 * (reduced ? 0.8 : 1.5);
     }
 };
 ChartInternal.prototype._getCircle = function () {
