@@ -836,7 +836,7 @@ ChartInternal.prototype.initialOpacityForCircle = function(d) {
 ChartInternal.prototype.opacityForCircle = function(d) {
     var isPointShouldBeShown = isFunction(this.config.point_show) ? this.config.point_show(d) : this.config.point_show;
     var opacity = isPointShouldBeShown ? 1 : 0;
-    return isValue(d.value) ? (this.isScatterType(d) ? 0.5 : opacity) : 0;
+    return isValue(d.value) ? (this.isScatterType(d) ? 0.8 : opacity) : 0;
 };
 ChartInternal.prototype.opacityForText = function() {
     return this.hasDataLabel() ? 1 : 0;
