@@ -186,6 +186,9 @@ ChartInternal.prototype.getDefaultConfig = function () {
         pie_label_format: undefined,
         pie_label_threshold: 0.05,
         pie_label_ratio: undefined,
+        pie_label_maxWidth: 200,
+        pie_label_minLetters: 15,
+        pie_minRadius: 100,
         pie_expand: {},
         pie_expand_duration: 50,
         // gauge

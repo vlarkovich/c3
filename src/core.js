@@ -444,6 +444,15 @@ ChartInternal.prototype.updateSizes = function() {
     // for arc
     $$.arcWidth = $$.width - ($$.isLegendRight || $$.isLegendLeft ? legendWidth + 10 : 0);
     $$.arcHeight = $$.height - ($$.isLegendRight || $$.isLegendLeft ? 0 : 10);
+
+    if($$.arcWidth < config.pie_minRadius * 2) {
+        $$.arcWidth = config.pie_minRadius * 2;
+    }
+
+    if($$.arcHeight < config.pie_minRadius * 2) {
+        $$.arcHeight = config.pie_minRadius * 2;
+    }
+
     if ($$.hasType('gauge') && !config.gauge_fullCircle) {
         $$.arcHeight += $$.height - $$.getGaugeLabelHeight();
     }
@@ -469,11 +478,11 @@ ChartInternal.prototype.updateSizes = function() {
     }
 
     if (hasArc && $$.isLegendRight) {
-        $$.arcMarginX = Math.min($$.width - legendWidth - $$.radiusExpanded * 1.1  - $$.arcLabelWidth, $$.width / 2);
-        $$.margin3.left = $$.arcMarginX + $$.radiusExpanded * 1.1 + $$.arcLabelWidth;
+        $$.arcMarginX = Math.min($$.arcWidth / 2, $$.width / 2);
+        $$.margin3.left = $$.arcWidth;
     } else if (hasArc && $$.isLegendLeft) {
-        $$.arcMarginX = Math.max(legendWidth + $$.radiusExpanded * 1.1 + $$.arcLabelWidth, $$.width / 2);
-        $$.margin3.left = Math.max($$.width / 2 - $$.radiusExpanded * 1.1 - legendWidth - $$.arcLabelWidth, 0);
+        $$.arcMarginX = Math.max($$.width - $$.arcWidth / 2, $$.width / 2);
+        $$.margin3.left = $$.width - $$.arcWidth - legendWidth;
     } else {
         $$.arcMarginX = $$.width / 2;
     }
