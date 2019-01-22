@@ -40,7 +40,7 @@ ChartInternal.prototype.updateSizeForLegend = function (legendHeight, legendWidt
     }
 
     if ($$.isLegendLeft || $$.isLegendRight) {
-        y = ($$.currentHeight - legendHeight) / 2;
+        y = Math.max(($$.currentHeight - legendHeight) / 2, $$.getCurrentPaddingTop());
     } else if ($$.isLegendTop) {
         y = $$.getCurrentPaddingTop();
     } else if ($$.isLegendInset) {
@@ -234,7 +234,7 @@ ChartInternal.prototype.updateLegend = function (targetIds, options, transitions
         } else if ($$.isLegendHorizontal){
             legendAreaLength = $$.isLegendLeft || $$.isLegendRight ? $$.currentWidth * ($$.hasArcType() ? 0.5 : 0.66) : $$.currentWidth;
         } else {
-            legendAreaLength = ($$.isLegendLeft || $$.isLegendRight ? $$.currentHeight : $$.currentHeight * ($$.hasArcType() ? 0.5 : 0.66)) - $$.legendTitleHeight;
+            legendAreaLength = ($$.isLegendLeft || $$.isLegendRight ? $$.currentHeight - $$.getCurrentPaddingTop() - $$.getCurrentPaddingBottom() : $$.currentHeight * 0.66) - $$.legendTitleHeight;
         }
 
         if (config.legend_equally) {
@@ -340,11 +340,13 @@ ChartInternal.prototype.updateLegend = function (targetIds, options, transitions
 
         legendTitle.append("tspan")
             .text(config.legend_title);
+    }
 
+    if(legendTitle.size() > 0){
         legendTitleTextBox = legendTitle.node().getBoundingClientRect();
         $$.legendTitleHeight = legendTitleTextBox.height + titlePadding;
         $$.legendTitleWidth = legendTitleTextBox.width + titlePadding * 2;
-    }
+    }    
 
     texts = $$.legend.selectAll('text.' + CLASS.legendItemText)
         .data(targetIds)
