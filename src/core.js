@@ -277,11 +277,11 @@ ChartInternal.prototype.initWithData = function(data) {
     if ($$.initTooltip) {
         $$.initTooltip();
     }
-    if ($$.initLegend) {
-        $$.initLegend();
-    }
     if ($$.initTitle) {
         $$.initTitle();
+    }
+    if ($$.initLegend) {
+        $$.initLegend();
     }
     if ($$.initZoom) {
         $$.initZoom();
