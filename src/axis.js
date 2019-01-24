@@ -79,8 +79,7 @@ Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValue
         scaleCopy1.domain([domain[0], domain[1] - 1]);
         let range = scaleCopy.range();
         scaleCopy.range([range[0], range[1] - (scaleCopy1(domain[1]) - scaleCopy(domain[1])) * 2]);
-
-        this.calculateRotation("x", axisParams, scaleCopy, orient, tickFormat);
+        this.calculateXRotation("x", axisParams, scaleCopy, orient, tickFormat);
         $$.tickTextRotate = axisParams.tickTextRotate;
     }
 
@@ -102,54 +101,6 @@ Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValue
     }
 
     return axis;
-};
-Axis.prototype.calculateRotation = function calculateRotation(id, axisParams, scale, orient, tickFormat) {
-    var $$ = this.owner,
-        self = this,
-        config = $$.config,
-        targetsToShow = $$.filterTargetsToShow($$.data.targets),
-        tickValues = $$.xAxisTickValues,
-        axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient), 
-        dummy, svg, prevX;
-
-    if ($$.isTimeSeries() && tickValues && typeof tickValues !== "function") {
-        tickValues = tickValues.map(function (v) {
-            return $$.parseDate(v);
-        });
-    }
-
-    // Set tick
-    axis.tickFormat(tickFormat).tickValues(tickValues);
-    if ($$.isCategorized()) {
-        axis.tickCentered(config.axis_x_tick_centered);
-        if (isEmpty(config.axis_x_tick_culling)) {
-            config.axis_x_tick_culling = false;
-        }
-    }
-
-    this.updateXAxisTickValues(targetsToShow, axis);
-
-    dummy = $$.d3.select('body').append('div').classed('c3', true);
-    svg = dummy.append("svg").style('visibility', 'hidden').style('position', 'fixed').style('top', 0).style('left', 0);
-    svg.append('g').call(axis).each(function () {
-        let incorrect = $$.d3.select(this).selectAll('text').nodes().some(function (node) {
-            let box = node.getBoundingClientRect();
-            if (prevX + 2 > box.left || (axis.tickValues() && axis.tickValues().length > 1 && box.left < 0)) {
-                return true;
-            }
-
-            prevX = box.left + box.width;
-            return false;
-        });
-
-        dummy.remove();
-        if (incorrect && axisParams.tickTextRotate - 5 > -91) {
-            axisParams.tickTextRotate -= 5;
-            self.calculateRotation(id, axisParams, scale, orient, tickFormat);
-        }
-    });
-
-    return;
 };
 Axis.prototype.updateXAxisTickValues = function updateXAxisTickValues(targets, axis) {
     var $$ = this.owner,
@@ -184,7 +135,9 @@ Axis.prototype.getYAxis = function getYAxis(scale, orient, tickFormat, tickValue
 
     if (config.axis_rotated && !isY2 && config.axis_y_tick_rotateAuto && canRotate) {
         $$.tickTextRotate = axisParams.tickTextRotate;
-        this.calculateYRotation("y", axisParams, scale, orient, tickFormat);
+        let targetsToShow = $$.filterTargetsToShow($$.data.targets);
+        let scaleCopy = scale.copy().domain($$.getYDomain(targetsToShow, "y"));
+        this.calculateYRotation("y", axisParams, scaleCopy, orient, tickFormat);
         $$.tickTextRotate = axisParams.tickTextRotate;
     }
 
@@ -198,19 +151,56 @@ Axis.prototype.getYAxis = function getYAxis(scale, orient, tickFormat, tickValue
 
     return axis;
 };
-Axis.prototype.calculateYRotation = function calculateRotation(id, axisParams, scale, orient, tickFormat) {
+Axis.prototype.calculateXRotation = function calculateXRotation(id, axisParams, scale, orient, tickFormat) {
     var $$ = this.owner,
-        self = this,
+        config = $$.config,
+        targetsToShow = $$.filterTargetsToShow($$.data.targets),
+        tickValues = $$.xAxisTickValues,
+        axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient);
+
+    if ($$.isTimeSeries() && tickValues && typeof tickValues !== "function") {
+        tickValues = tickValues.map(function (v) {
+            return $$.parseDate(v);
+        });
+    }
+
+    // Set tick
+    axis.tickFormat(tickFormat).tickValues(tickValues);
+    if ($$.isCategorized()) {
+        axis.tickCentered(config.axis_x_tick_centered);
+        if (isEmpty(config.axis_x_tick_culling)) {
+            config.axis_x_tick_culling = false;
+        }
+    }
+
+    this.updateXAxisTickValues(targetsToShow, axis);
+
+    this.calculateAxis(id, axis, axisParams, scale, orient, tickFormat, this.calculateXRotation);
+};
+Axis.prototype.calculateYRotation = function calculateYRotation(id, axisParams, scale, orient, tickFormat) {
+    var $$ = this.owner,
         config = $$.config,
         tickValues = $$.yAxisTickValues,
-        axis = new self.internal(self, axisParams).axis.scale(scale).orient(orient).tickFormat(tickFormat), 
-        dummy, svg, prevX;
+        
+        axis = new this.internal(this, axisParams).axis.scale(scale).orient(orient).tickFormat(tickFormat);
 
     if ($$.isTimeSeriesY()) {
         axis.ticks(config.axis_y_tick_time_type, config.axis_y_tick_time_interval);
     } else {
         axis.tickValues(tickValues);
     }
+
+    this.calculateAxis(id, axis, axisParams, scale, orient, tickFormat, this.calculateYRotation);
+};
+Axis.prototype.calculateAxis = function calculateAxis(id, axis, axisParams, scale, orient, tickFormat, callback) {
+    var $$ = this.owner,
+        self = this,
+        legendHeight = $$.legend ? $$.getLegendHeight() : 0,
+        legendHeightForBottom = $$.isLegendRight || $$.isLegendLeft || $$.isLegendInset || $$.isLegendTop ? 0 : legendHeight,
+        legendHeightForTop = $$.isLegendTop ? legendHeight : 0,
+        topPadding = $$.getCurrentPaddingTop() + legendHeightForTop,
+        bottomPadding = $$.getCurrentPaddingBottom() + legendHeightForBottom,
+        dummy, svg, prevX;
 
     dummy = $$.d3.select('body').append('div').classed('c3', true);
     svg = dummy.append("svg").style('visibility', 'hidden').style('position', 'fixed').style('top', 0).style('left', 0);
@@ -226,13 +216,26 @@ Axis.prototype.calculateYRotation = function calculateRotation(id, axisParams, s
         });
 
         dummy.remove();
-        if (incorrect && axisParams.tickTextRotate - 5 > -91) {
-            axisParams.tickTextRotate -= 5;
-            self.calculateYRotation(id, axisParams, scale, orient, tickFormat);
+        if (incorrect) {
+            if (axisParams.tickTextRotate - 15 > -90) {
+                axisParams.tickTextRotate -= 15;
+            } else {
+                axisParams.tickTextRotate = -90;
+            }
+
+            let tickHeight = 40 + $$.axis.getMaxTickWidth(id, true) * Math.cos(Math.PI * (90 - Math.abs(axisParams.tickTextRotate)) / 180);
+
+            if (tickHeight > ($$.currentHeight - topPadding - bottomPadding) * 3 / 4) {
+                if (axisParams.tickTextRotate + 15 < 0) {
+                    axisParams.tickTextRotate += 15;
+                } else {
+                    axisParams.tickTextRotate = 0;
+                }
+            } else if (axisParams.tickTextRotate > -90) {
+                callback.call(self, id, axisParams, scale, orient, tickFormat);
+            }
         }
     });
-
-    return;
 };
 Axis.prototype.getId = function getId(id) {
     var config = this.owner.config;
