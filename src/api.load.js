@@ -8,7 +8,7 @@ Chart.prototype.load = function (args) {
     }
     // update names if exists
     if ('names' in args) {
-        Chart.prototype.data.names.bind(this)(args.names);
+        Chart.prototype.data.names.bind(this)(args.names, true);
     }
     // update classes if exists
     if ('classes' in args) {

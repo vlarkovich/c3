@@ -399,7 +399,7 @@ ChartInternal.prototype.convertValuesToStep = function (values) {
 
     return converted;
 };
-ChartInternal.prototype.updateDataAttributes = function (name, attrs) {
+ChartInternal.prototype.updateDataAttributes = function (name, attrs, withoutRedraw) {
     var $$ = this,
         config = $$.config,
         current = config['data_' + name];
@@ -409,8 +409,10 @@ ChartInternal.prototype.updateDataAttributes = function (name, attrs) {
     Object.keys(attrs).forEach(function (id) {
         current[id] = attrs[id];
     });
-    $$.redraw({
-        withLegend: true
-    });
+    if (!withoutRedraw) {
+        $$.redraw({
+            withLegend: true
+        });
+    }
     return current;
 };
