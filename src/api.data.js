@@ -17,9 +17,9 @@ Chart.prototype.data.values = function (targetId) {
     }
     return values;
 };
-Chart.prototype.data.names = function (names) {
+Chart.prototype.data.names = function (names, withoutRedraw) {
     this.internal.clearLegendItemTextBoxCache();
-    return this.internal.updateDataAttributes('names', names);
+    return this.internal.updateDataAttributes('names', names, withoutRedraw);
 };
 Chart.prototype.data.colors = function (colors) {
     return this.internal.updateDataAttributes('colors', colors);
