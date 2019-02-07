@@ -70,10 +70,11 @@ ChartInternal.prototype.getLegendWidth = function () {
     return 0;
 };
 ChartInternal.prototype.getLegendHeight = function () {
-    var $$ = this;
+    var $$ = this,
+        config = $$.config;
 
     if ($$.config.legend_show) {
-        return (!$$.isLegendHorizontal || $$.isLegendInset ? $$.legendLength : $$.legendItemMaxHeight * ($$.legendStep + 1)) + ($$.legendTitleHeight || 0);
+        return (!$$.isLegendHorizontal || $$.isLegendInset ? $$.legendLength : $$.legendItemMaxHeight * ($$.legendStep + 1)) + ($$.legendTitleHeight || 0) + config.legend_item_bottomPadding;
     }
 
     return 0;
@@ -231,10 +232,10 @@ ChartInternal.prototype.updateLegend = function (targetIds, options, transitions
 
         if ($$.isLegendInset) {
             legendAreaLength = config.legend_inset_step ? config.legend_inset_step * maxHeight : $$.currentHeight - config.legend_inset_y;
-        } else if ($$.isLegendHorizontal){
-            legendAreaLength = $$.isLegendLeft || $$.isLegendRight ? $$.currentWidth * ($$.hasArcType() ? 0.5 : 0.66) : $$.currentWidth;
+        } else if ($$.isLegendHorizontal) {
+            legendAreaLength = $$.isLegendLeft || $$.isLegendRight ? $$.currentWidth * config.legend_screenSpace : $$.currentWidth;
         } else {
-            legendAreaLength = ($$.isLegendLeft || $$.isLegendRight ? $$.currentHeight - $$.getCurrentPaddingTop() - $$.getCurrentPaddingBottom() : $$.currentHeight * 0.66) - $$.legendTitleHeight;
+            legendAreaLength = ($$.isLegendLeft || $$.isLegendRight ? $$.currentHeight - $$.getCurrentPaddingTop() - $$.getCurrentPaddingBottom() : $$.currentHeight * config.legend_screenSpace) - $$.legendTitleHeight;
         }
 
         if (config.legend_equally) {
@@ -263,7 +264,7 @@ ChartInternal.prototype.updateLegend = function (targetIds, options, transitions
 
     x1ForLegendTile = function (id, i) { return xForLegend(id, i) + tilePaddingLeft; };
     x2ForLegendTile = function (id, i) { return x1ForLegendTile(id, i) + config.legend_item_tile_width; };
-    yForLegendTile = function (id, i) { return itemPaddingTop + yForLegend(id, i) + config.legend_item_tile_height / 2; };
+    yForLegendTile = function (id, i) { return itemPaddingTop + yForLegend(id, i) + (config.legend_item_tile_height + config.legend_item_bottomPadding) / 2; };
 
     xForLegendText = function (id, i) { return x2ForLegendTile(id, i) + tilePaddingRight; };
     yForLegendText = function (id, i) { return itemPaddingTop + yForLegend(id, i) + config.legend_item_tile_height; };
@@ -287,8 +288,25 @@ ChartInternal.prototype.updateLegend = function (targetIds, options, transitions
                     $$.api.show(id);
                 } else {
                     $$.api.toggle(id);
-                    $$.isTargetToShow(id) ? $$.api.focus(id) : $$.api.revert();
+                    $$.isTargetToShow(id) ? $$.api.focus(id) : $$.api.revert();   
                 }
+            }
+        })
+        .on('touchstart', function (id) {
+            if (config.legend_item_onclick) {
+                config.legend_item_onclick.call($$, id);
+            } else {
+                if ($$.d3.event.altKey) {
+                    $$.api.hide();
+                    $$.api.show(id);
+                } else {
+                    $$.api.toggle(id);
+                    $$.api.revert();     
+                }
+            }
+
+            if($$.d3.event.preventDefault) {
+                $$.d3.event.preventDefault();
             }
         })
         .on('mouseover', function (id) {
