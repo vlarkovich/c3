@@ -131,6 +131,7 @@ ChartInternal.prototype.getDefaultConfig = function () {
         axis_x_selection: undefined,
         axis_x_label: {},
         axis_x_inner: undefined,
+        axis_x_inverted: false,
         axis_y_show: true,
         axis_y_type: undefined,
         axis_y_max: undefined,

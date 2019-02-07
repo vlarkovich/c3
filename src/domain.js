@@ -203,11 +203,18 @@ ChartInternal.prototype.getXDomain = function (targets) {
     }
     return [min, max];
 };
+ChartInternal.prototype.getExtentXDomain = function (targets) {
+    var $$ = this,
+        config = $$.config;
+
+    let xDomain = $$.d3.extent($$.getXDomain(targets));
+    return config.axis_x_inverted && !$$.isCategorized() ? xDomain.reverse(): xDomain;
+};
 ChartInternal.prototype.updateXDomain = function (targets, withUpdateXDomain, withUpdateOrgXDomain, withTrim, domain) {
     var $$ = this, config = $$.config;
 
     if (withUpdateOrgXDomain) {
-        $$.x.domain(domain ? domain : $$.d3.extent($$.getXDomain(targets)));
+        $$.x.domain(domain ? domain : $$.getExtentXDomain(targets));
         $$.orgXDomain = $$.x.domain();
         if (config.zoom_enabled) { $$.zoom.update(); }
         $$.subX.domain($$.x.domain());
