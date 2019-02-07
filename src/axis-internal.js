@@ -46,15 +46,24 @@ AxisInternal.prototype.generateTicks = function (scale) {
         params = internal.params,
         units = params.majorTickUnits,
         isTimeSeries = params.isTimeSeries,
-        domain = scale.domain();
+        domain = scale.domain(),
+        lower, upper;
     var i, ticks = [];
-    if (units && !params.isCategory) {      
+    if (units && !params.isCategory) {
+        if (params.inverted && !params.isCategory) {
+            lower = domain[1];
+            upper = domain[0];
+        } else {
+            lower = domain[0];
+            upper = domain[1];
+        }
+
         if(isTimeSeries){
-            for (i = domain[0].getTime(); i < domain[1].getTime(); i += units) {
+            for (i = lower.getTime(); i < upper.getTime(); i += units) {
                 ticks.push(new Date(i));
             }
         } else {
-            for (i = domain[0]; i < domain[1]; i += units) {
+            for (i = lower; i < upper; i += units) {
                 ticks.push(i);
             }
         }
@@ -80,16 +89,25 @@ AxisInternal.prototype.generateMinorTicks = function (scale, majorTickValues) {
         minorTickValues = [],
         domain = scale.domain(),
         onlyOneItem = majorTickValues.length === 1,
-        step = (params.isCategory ? 1 : onlyOneItem ? majorTickValues[0] - domain[0] : majorTickValues[1] - majorTickValues[0]) / 2,
-        current, prev, i;
+        step, current, prev, i, lower, upper;
 
-    if(units && !params.isCategory){
+    if (params.inverted && !params.isCategory) {
+        lower = domain[1];
+        upper = domain[0];
+    } else {
+        lower = domain[0];
+        upper = domain[1];
+    }
+
+    step = (params.isCategory ? 1 : onlyOneItem ? majorTickValues[0] - lower : majorTickValues[1] - majorTickValues[0]) / 2;
+
+    if (units && !params.isCategory) {
         if(isTimeSeries){
-            for (i = domain[0].getTime(); i < domain[1].getTime(); i += units) {
+            for (i = lower.getTime(); i < upper.getTime(); i += units) {
                 minorTickValues.push(new Date(i));
             }
         } else {
-            for (i = domain[0]; i < domain[1]; i += units) {
+            for (i = lower; i < upper; i += units) {
                 minorTickValues.push(i);
             }
         }
@@ -99,7 +117,7 @@ AxisInternal.prototype.generateMinorTicks = function (scale, majorTickValues) {
                 if (onlyOneItem && !params.isCategory) {
                     minorTickValues.push(majorTickValues[i] - step);
                     minorTickValues.push(majorTickValues[i] + step);
-                } else if (majorTickValues[i] - step > domain[0]) {
+                } else if (majorTickValues[i] - step > lower && majorTickValues[i] - step < upper) {
                     minorTickValues.push(majorTickValues[i] - step);
                 }
             } else if (i === majorTickValues.length - 1) {
@@ -108,7 +126,7 @@ AxisInternal.prototype.generateMinorTicks = function (scale, majorTickValues) {
     
                 minorTickValues.push((prev + current) / 2);
     
-                if (current + step < domain[domain.length - 1]) {
+                if (current + step < upper && current + step > lower) {
                     minorTickValues.push(current + step);
                 }
             } else {

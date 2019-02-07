@@ -216,7 +216,7 @@ ChartInternal.prototype.initWithData = function(data) {
     $$.updateScales();
 
     // Set domains for each scale
-    $$.x.domain(d3.extent($$.getXDomain($$.data.targets)));
+    $$.x.domain($$.getExtentXDomain($$.data.targets));
     $$.y.domain($$.getYDomain($$.data.targets, 'y'));
     $$.y2.domain($$.getYDomain($$.data.targets, 'y2'));
     $$.subX.domain($$.x.domain());

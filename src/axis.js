@@ -67,14 +67,16 @@ Axis.prototype.getXAxis = function getXAxis(scale, orient, tickFormat, tickValue
             majorTickFactor: config.axis_x_tick_major_factor || 1,
             minorTickFactor: config.axis_x_tick_minor_factor || 1,
             majorTickUnits: config.axis_x_tick_major_units || 0,
-            minorTickUnits: config.axis_x_tick_minor_units || 0
+            minorTickUnits: config.axis_x_tick_minor_units || 0,
+            inverted: config.axis_x_inverted
         }, axis;
 
     if(config.axis_rotated === false && config.axis_x_tick_rotateAuto && canRotate) {
         $$.tickTextRotate = axisParams.tickTextRotate;
-        
-        let scaleCopy = scale.copy();
-        let scaleCopy1 = scale.copy();
+
+        let targetsToShow = $$.filterTargetsToShow($$.data.targets);                
+        let scaleCopy = scale.copy().domain($$.getXDomain(targetsToShow));
+        let scaleCopy1 = scaleCopy.copy();
         let domain = scaleCopy1.domain();
         scaleCopy1.domain([domain[0], domain[1] - 1]);
         let range = scaleCopy.range();
@@ -495,7 +497,8 @@ Axis.prototype.getPadding = function getPadding(padding, key, defaultValue, doma
 Axis.prototype.convertPixelsToAxisPadding = function convertPixelsToAxisPadding(pixels, domainLength) {
     var $$ = this.owner,
         length = $$.config.axis_rotated ? $$.width : $$.height;
-    return domainLength * (pixels / length);
+        
+    return domainLength * (pixels / (length === 0 ? 1 : length));
 };
 Axis.prototype.generateTickValues = function generateTickValues(values, tickCount, forTimeSeries) {
     var tickValues = values,
