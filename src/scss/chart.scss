@@ -12,13 +12,13 @@
           user-select: none;
 }
 
-.c3-xgrid-focus,
-.c3-ygrid,
 .c3-event-rect,
 .c3-bars path {
   shape-rendering: crispEdges;
 }
 
+.c3-xgrid-focus,
+.c3-ygrid,
 .c3-legend-item-tile {
   shape-rendering: auto;
 }

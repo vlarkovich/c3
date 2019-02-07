@@ -7,7 +7,6 @@ ChartInternal.prototype.initLegend = function () {
     $$.legendItemTextBox = {};
     $$.legendHasRendered = false;
     $$.legendTitleHeight = 0;
-    $$.legendItemBottomPadding = 5;
     $$.legend = $$.svg.append("g").attr("transform", $$.getTranslate('legend'));
     if (!$$.config.legend_show) {
         $$.legend.style('visibility', 'hidden');
