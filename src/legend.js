@@ -235,7 +235,7 @@ ChartInternal.prototype.updateLegend = function (targetIds, options, transitions
         } else if ($$.isLegendHorizontal) {
             legendAreaLength = $$.isLegendLeft || $$.isLegendRight ? $$.currentWidth * config.legend_screenSpace : $$.currentWidth;
         } else {
-            legendAreaLength = ($$.isLegendLeft || $$.isLegendRight ? $$.currentHeight - $$.getCurrentPaddingTop() - $$.getCurrentPaddingBottom() : $$.currentHeight * config.legend_screenSpace) - $$.legendTitleHeight;
+            legendAreaLength = ($$.isLegendLeft || $$.isLegendRight ? $$.currentHeight - $$.getCurrentPaddingTop() - $$.getCurrentPaddingBottom() : ($$.currentHeight - $$.getCurrentPaddingTop() - $$.getCurrentPaddingBottom()) * config.legend_screenSpace) - $$.legendTitleHeight;
         }
 
         if (config.legend_equally) {
